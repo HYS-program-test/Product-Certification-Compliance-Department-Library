@@ -1292,6 +1292,7 @@ def render_results_list(result_df, title_field, meta_fields, s3_folder, keyword_
 # 主查詢畫面
 # ─────────────────────────────────────────────
 def render_main():
+    init_session()
     inject_css()
 
     st.markdown("""
