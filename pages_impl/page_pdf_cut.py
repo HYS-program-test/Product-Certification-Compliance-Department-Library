@@ -475,12 +475,11 @@ def render():
         unsafe_allow_html=True,
     )
 
-    with st.sidebar:
-        st.markdown("### 上傳")
-        uploaded = st.file_uploader("上傳掃描 PDF（可能包含 30~50 頁、多份文件）", type=["pdf"])
+    st.markdown("##### 上傳")
+    uploaded = st.file_uploader("上傳掃描 PDF（可能包含 30~50 頁、多份文件）", type=["pdf"])
 
     if uploaded is None:
-        st.info("請從左側上傳掃描後的 PDF 檔案，系統會自動偵測每份文件的標題並建議分割點。")
+        st.info("請上傳掃描後的 PDF 檔案，系統會自動偵測每份文件的標題並建議分割點。")
         st.stop()
 
     pdf_bytes = uploaded.read()

@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="商品證書管理入口",
     page_icon="🗂️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ─────────────────────────────────────────────
@@ -129,33 +129,33 @@ def inject_shared_css():
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
-      [data-testid="collapsedControl"] {
-        display: flex !important; visibility: visible !important; opacity: 1 !important;
-      }
       .block-container { padding-top: 1rem !important; margin-top: 0 !important; max-width: 100% !important; }
       .stApp { background-color: #F7F8F9; }
 
-      .portal-header {
-        background: #16324F; color: #fff; padding: .9rem 1.5rem;
-        border-radius: 12px; margin-bottom: .8rem;
-        display: flex; align-items: center; justify-content: space-between;
-      }
-      .portal-header h1 { font-size: 1.25rem; font-weight: 700; margin: 0; color: #fff; }
-      .portal-header .user-info { font-size: .85rem; color: #CBD9E3; }
-
-      .nav-bar {
-        display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap;
-      }
       div[data-testid="stButton"] button {
         border-radius: 8px !important;
       }
-      .st-key-nav_row div[data-testid="stButton"] button {
-        background: #EEF2F4 !important; color: #33414A !important;
-        border: 1px solid #E1E6E9 !important; font-weight: 600 !important;
-        font-size: .82rem !important; padding: .4rem .3rem !important;
+      /* 左側導覽欄：深藍底、直排頁籤按鈕 */
+      .st-key-nav_col {
+        background: #16324F; border-radius: 12px; padding: .9rem .6rem;
+        height: 100%;
       }
-      .st-key-nav_row div[data-testid="stButton"] button:hover {
-        background: #DCE6EC !important;
+      .st-key-nav_col [data-testid="stVerticalBlock"] { gap: 6px !important; }
+      .st-key-nav_col div[data-testid="stButton"] button {
+        background: transparent !important; color: #CBD9E3 !important;
+        border: 1px solid transparent !important; font-weight: 600 !important;
+        font-size: .8rem !important; padding: .5rem .4rem !important;
+        text-align: left !important; white-space: normal !important;
+      }
+      .st-key-nav_col div[data-testid="stButton"] button:hover {
+        background: rgba(255,255,255,.08) !important; color: #fff !important;
+      }
+      .st-key-nav_col div[data-testid="stButton"] button[kind="primary"] {
+        background: #3A7CA5 !important; color: #fff !important;
+      }
+      .nav-user {
+        color: #8FA6B8; font-size: .72rem; padding: .4rem;
+        border-top: 1px solid rgba(255,255,255,.12); margin-top: .6rem;
       }
     </style>
     """, unsafe_allow_html=True)
@@ -166,9 +166,7 @@ def inject_shared_css():
 # ─────────────────────────────────────────────
 def render_login():
     inject_shared_css()
-    st.markdown("""
-    <div class="portal-header"><h1>商品證書管理入口</h1></div>
-    """, unsafe_allow_html=True)
+    st.markdown("#### 商品證書管理入口")
 
     _, col, _ = st.columns([1, 1.2, 1])
     with col:
@@ -257,31 +255,23 @@ def render_login():
 # 導覽列 + 分頁分發
 # ─────────────────────────────────────────────
 def render_nav():
-    col_head_l, col_head_r = st.columns([5, 1.5])
-    with col_head_l:
+    with st.container(key="nav_col"):
+        for page in PAGES:
+            label = f"{page['id']}　{page['label']}"
+            is_active = st.session_state["current_page"] == page["id"]
+            if st.button(label, key=f"nav_{page['id']}", use_container_width=True,
+                         type="primary" if is_active else "secondary"):
+                st.session_state["current_page"] = page["id"]
+                st.rerun()
+
         st.markdown(f"""
-        <div class="portal-header">
-          <h1>商品證書管理入口</h1>
-          <span class="user-info">👤 {st.session_state.get("username","")}</span>
-        </div>
+        <div class="nav-user">👤 {st.session_state.get("username","")}</div>
         """, unsafe_allow_html=True)
-    with col_head_r:
         if st.button("登出", use_container_width=True, key="portal_logout_btn"):
             for k in ["logged_in", "username", "login_step", "login_email",
                       "otp_code", "otp_expiry", "login_error", "last_login_nonce"]:
                 st.session_state.pop(k, None)
             st.rerun()
-
-    with st.container(key="nav_row"):
-        cols = st.columns(len(PAGES))
-        for col, page in zip(cols, PAGES):
-            with col:
-                label = f"{page['id']} {page['label']}"
-                is_active = st.session_state["current_page"] == page["id"]
-                if st.button(label, key=f"nav_{page['id']}", use_container_width=True,
-                             type="primary" if is_active else "secondary"):
-                    st.session_state["current_page"] = page["id"]
-                    st.rerun()
 
 
 def render_page():
@@ -319,8 +309,11 @@ def main():
         render_login()
     else:
         inject_shared_css()
-        render_nav()
-        render_page()
+        col_nav, col_content = st.columns([1, 6], gap="medium")
+        with col_nav:
+            render_nav()
+        with col_content:
+            render_page()
 
 
 if __name__ == "__main__":

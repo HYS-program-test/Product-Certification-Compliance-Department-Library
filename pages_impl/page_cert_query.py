@@ -1301,22 +1301,6 @@ def render_main():
     </div>
     """, unsafe_allow_html=True)
 
-    col_space, col_user, col_logout = st.columns([7, 1.5, 1])
-    with col_user:
-        st.markdown(f'<div class="user-info">👤 {st.session_state.get("username","")}</div>', unsafe_allow_html=True)
-    with col_logout:
-        if st.button("登出", use_container_width=True):
-            st.session_state["logged_in"]     = False
-            st.session_state["username"]      = ""
-            st.session_state["search_result"] = None
-            st.session_state["ai_messages"]   = None
-            st.session_state["app_mode"]      = False
-            st.session_state["app_step"]      = 0
-            st.session_state["app_data"]      = {}
-            st.session_state["app_confirmed"] = False
-            st.session_state["download_cart"] = []
-            st.rerun()
-
     col_left, col_right = st.columns([1.15, 1])
 
     with col_left:

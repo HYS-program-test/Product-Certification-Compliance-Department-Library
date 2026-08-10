@@ -825,15 +825,7 @@ def render_main():
 
     st.caption(f"辨識結果將寫入正式資料表「Total Certificate Management／{DATA_WORKSHEET_NAME}」，PDF 將上傳至正式 S3 資料夾。")
 
-    col_sp, col_user, col_logout = st.columns([7, 1.5, 1])
-    with col_user:
-        st.markdown(f"👤 {st.session_state.get('username','')}")
-    with col_logout:
-        if st.button("登出", use_container_width=True):
-            st.session_state["logged_in"]   = False
-            st.session_state["username"]    = ""
-            st.session_state["ocr_results"] = []
-            st.rerun()
+
 
     st.subheader("第一步：上傳 PDF（可多份）")
     uploaded_files = st.file_uploader(
