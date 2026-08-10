@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="商品證書管理入口",
     page_icon="🗂️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # ─────────────────────────────────────────────
@@ -129,6 +129,9 @@ def inject_shared_css():
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
+      [data-testid="collapsedControl"] {
+        display: flex !important; visibility: visible !important; opacity: 1 !important;
+      }
       .block-container { padding-top: 1rem !important; margin-top: 0 !important; max-width: 100% !important; }
       .stApp { background-color: #F7F8F9; }
 

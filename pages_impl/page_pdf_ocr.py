@@ -117,8 +117,6 @@ def init_session():
         if k not in st.session_state:
             st.session_state[k] = v
 
-init_session()
-
 # ─────────────────────────────────────────────
 # Gmail SMTP 寄 OTP
 # ─────────────────────────────────────────────
@@ -818,6 +816,7 @@ def inject_css():
 # 主畫面
 # ─────────────────────────────────────────────
 def render_main():
+    init_session()
     inject_css()
 
     st.markdown("""
