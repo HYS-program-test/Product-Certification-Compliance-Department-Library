@@ -176,7 +176,7 @@ def render():
             fig1, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 2: 節能標章取得百分比 (完美等寬: 每圈厚度嚴格等於 0.07) ---
+    # --- 區塊 2: 節能標章取得百分比 (方法 2：嚴格等厚度繪製) ---
     with col2:
         st.markdown(
             '<div class="block-card-title">2 節能標章取得百分比</div>',
@@ -201,52 +201,58 @@ def render():
 
         fig2 = go.Figure()
 
-        # 等差數列設定：(radius - hole) 恆等於 0.07，確保四圈實體線條寬度完全相同
-        # 圈與圈之間留 0.03 的間隔
+        # 精準數值計算：
+        # 厚度 (W) = 0.08, 間隔 (G) = 0.02
+        # 第 1 圈 (MA): R_out = 1.00 -> hole = (1.00 - 0.08) / 1.00 = 0.9200
+        # 第 2 圈 (VRV): R_out = 0.90 -> hole = (0.90 - 0.08) / 0.90 = 0.9111
+        # 第 3 圈 (SA): R_out = 0.80 -> hole = (0.80 - 0.08) / 0.80 = 0.9000
+        # 第 4 圈 (RA): R_out = 0.70 -> hole = (0.70 - 0.08) / 0.70 = 0.8857
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "radius": 1.00, "hole": 0.93, "label_y": 0.965}, # 寬度 0.07
-            {"cat": "VRV", "color": "#90CAF9", "radius": 0.90, "hole": 0.83, "label_y": 0.865}, # 寬度 0.07
-            {"cat": "SA", "color": "#FFCC80", "radius": 0.80, "hole": 0.73, "label_y": 0.765}, # 寬度 0.07
-            {"cat": "RA", "color": "#C5E1A5", "radius": 0.70, "hole": 0.63, "label_y": 0.665}, # 寬度 0.07
+            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.08) / 1.00, "label_y": 0.96},
+            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.90, "hole": (0.90 - 0.08) / 0.90, "label_y": 0.86},
+            {"cat": "SA", "color": "#FFCC80", "r_out": 0.80, "hole": (0.80 - 0.08) / 0.80, "label_y": 0.76},
+            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.70, "hole": (0.70 - 0.08) / 0.70, "label_y": 0.66},
         ]
 
         for cfg in ring_cfgs:
             c_name = cfg["cat"]
             val = rates.get(c_name, 0)
+            r_out = cfg["r_out"]
+            
             fig2.add_trace(
                 go.Pie(
                     values=[val, max(0, 100 - val)],
-                    labels=[f"{c_name}, {val:.1f}%", ""],
+                    labels=[f"{c_name}: {val:.1f}%", ""],
                     hole=cfg["hole"],
                     sort=False,
                     direction="clockwise",
                     rotation=90,
                     marker=dict(
                         colors=[cfg["color"], "#F1F5F9"],
-                        line=dict(color="#FFFFFF", width=2),
+                        line=dict(color="#FFFFFF", width=1.5),
                     ),
                     textinfo="none",
                     hoverinfo="label",
                     domain=dict(
-                        x=[0.5 - cfg["radius"] / 2, 0.5 + cfg["radius"] / 2],
-                        y=[0.5 - cfg["radius"] / 2, 0.5 + cfg["radius"] / 2],
+                        x=[0.5 - r_out / 2, 0.5 + r_out / 2],
+                        y=[0.5 - r_out / 2, 0.5 + r_out / 2],
                     ),
                     showlegend=False,
                 )
             )
 
-            # 在圓環上方加入設備名稱與百分比標籤
+            # 在各圈頂部標註設備名稱與百分比
             fig2.add_annotation(
                 x=0.5,
                 y=cfg["label_y"],
                 text=f"<b>{c_name}</b>: {val:.1f}%",
-                font=dict(size=9, color="#475569"),
+                font=dict(size=8.5, color="#334155"),
                 showarrow=False,
-                bgcolor="rgba(255,255,255,0.75)",
+                bgcolor="rgba(255,255,255,0.8)",
                 borderpad=1
             )
 
-        # 中央顯示整體百分比數字
+        # 中央顯示整體數字
         fig2.add_annotation(
             text=f"<b>{coverage_rate_num:.0f}%</b>",
             x=0.5,
@@ -264,7 +270,7 @@ def render():
             fig2, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 3: 各類別能效分級數量統計 (標準甜甜圈圖 + 中央大數字) ---
+    # --- 區塊 3: 各類別能效分級數量統計 (甜甜圈圖 + 中央大數字) ---
     with col3:
         st.markdown(
             '<div class="block-card-title">3 各類別能效分級數量統計</div>',
@@ -274,7 +280,6 @@ def render():
         if "節能標章證書編號" in sub_eff.columns:
             sub_eff = sub_eff.drop_duplicates("節能標章證書編號")
 
-        # 統計各類別的有效張數
         g3 = (
             sub_eff.groupby("類別")
             .size()
