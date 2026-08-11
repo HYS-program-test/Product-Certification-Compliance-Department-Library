@@ -229,6 +229,8 @@ def inject_shared_css():
 
       /* dataframe 邊框柔化，跟卡片風格一致 */
       div[data-testid="stDataFrame"] { border-radius: 6px; overflow: hidden; }
+      div[data-testid="stDataFrame"] * { font-size: .76rem !important; }
+      div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-size: .76rem !important; }
 
       /* 登入畫面置中：flexbox 撐滿視窗高度置中，全部加 !important 避免被蓋掉 */
       .st-key-login_wrap {

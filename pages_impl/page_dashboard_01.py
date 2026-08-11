@@ -57,7 +57,7 @@ def render():
         fig = go.Figure()
         fig.add_bar(name="商品驗證有效張數", x=CATEGORY_ORDER, y=g1.values, marker_color="#4472C4")
         fig.add_bar(name="節能標章有效張數", x=CATEGORY_ORDER, y=g2.values, marker_color="#82BE7E")
-        fig.update_layout(barmode="group", height=145, margin=MARGIN, legend=LEGEND_TOP,
+        fig.update_layout(barmode="group", height=188, margin=MARGIN, legend=LEGEND_TOP,
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -68,7 +68,7 @@ def render():
         fig = go.Figure()
         fig.add_bar(name="已取得標章型號數", x=CATEGORY_ORDER, y=badge_cnt.values, marker_color="#4472C4")
         fig.add_bar(name="有效商品型號數", x=CATEGORY_ORDER, y=valid_cnt.values, marker_color="#82BE7E")
-        fig.update_layout(barmode="group", height=145, margin=MARGIN, legend=LEGEND_TOP,
+        fig.update_layout(barmode="group", height=188, margin=MARGIN, legend=LEGEND_TOP,
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -85,7 +85,7 @@ def render():
         fig = go.Figure()
         fig.add_bar(name="商品驗證到期張數", x=buckets, y=c1.values, marker_color="#4472C4")
         fig.add_bar(name="節能標章到期張數", x=buckets, y=c2.values, marker_color="#82BE7E")
-        fig.update_layout(barmode="group", height=145, margin=MARGIN, legend=LEGEND_TOP,
+        fig.update_layout(barmode="group", height=188, margin=MARGIN, legend=LEGEND_TOP,
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -102,7 +102,7 @@ def render():
                 continue
             fig.add_bar(name=f"能效分級 {grade}", y=CATEGORY_ORDER, x=pivot[grade].values,
                         orientation="h", marker_color=colors.get(str(grade), "#4472C4"))
-        fig.update_layout(barmode="stack", height=145, margin=MARGIN, legend=LEGEND_TOP,
+        fig.update_layout(barmode="stack", height=188, margin=MARGIN, legend=LEGEND_TOP,
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -119,7 +119,7 @@ def render():
                 continue
             fig.add_bar(name=bucket, y=CATEGORY_ORDER, x=pivot[bucket].values,
                         orientation="h", marker_color=colors[bucket])
-        fig.update_layout(barmode="stack", height=145, margin=MARGIN,
+        fig.update_layout(barmode="stack", height=188, margin=MARGIN,
                            legend=dict(orientation="h", y=1.22, x=0, font=dict(size=9), traceorder="reversed"),
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
@@ -145,4 +145,4 @@ def render():
             columns=["證書類型", "證書編號", "類別", "型號", "有效日期", "剩餘天數"])
         due_df = due_df.drop_duplicates(subset=["證書編號"], keep="first")
         due_df = due_df.drop(columns=["類別", "剩餘天數"])
-        st.dataframe(due_df, use_container_width=True, hide_index=True, height=145)
+        st.dataframe(due_df, use_container_width=True, hide_index=True, height=188)
