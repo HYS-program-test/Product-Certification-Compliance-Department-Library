@@ -14,7 +14,7 @@ CSPF_COLORS = {"<100%": "#C0504D", "100-102.9%": "#4472C4", "103-105.9%": "#82BE
 MARGIN = dict(t=6, b=6, l=6, r=6)
 
 
-def _stacked_bar_card(df, key, title, value_col, order, colors, height=195):
+def _stacked_bar_card(df, key, title, value_col, order, colors, height=160):
     with st.container(key=key):
         st.markdown(f'<div class="block-card-title">{title}</div>', unsafe_allow_html=True)
         sub = df[df[value_col].notna()]
@@ -59,7 +59,7 @@ def render():
         ("CSPF低於標示型號數", cspf_low),
     ])
 
-    st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
     col_a, col_b = st.columns(2)
     with col_a:
         _stacked_bar_card(df, "chart_card_02_a", "A　證書到期風險分層（商品驗證）", "商品驗證風險狀態", RISK_ORDER, RISK_COLORS)
@@ -72,4 +72,4 @@ def render():
     with col_d, st.container(key="chart_card_02_d"):
         st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
         bad = df[df["資料品質異常"]][["類別", "室外機型號", "登錄編號", "能源效率分級", "資料品質異常原因"]]
-        st.dataframe(bad, use_container_width=True, hide_index=True, height=195)
+        st.dataframe(bad, use_container_width=True, hide_index=True, height=160)
