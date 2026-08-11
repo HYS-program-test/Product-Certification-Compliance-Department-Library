@@ -142,8 +142,8 @@ def inject_shared_css():
       .st-key-nav_col {
         background: #EBEEF0; border-radius: 10px; padding: .55rem .45rem;
         height: 100%; box-shadow: inset 0 0 0 1px rgba(22,50,79,.05);
+        gap: 3px !important;
       }
-      .st-key-nav_col [data-testid="stVerticalBlock"] { gap: 3px !important; }
       .st-key-nav_col div[data-testid="stButton"] button {
         background: transparent !important; color: #57666E !important;
         border: 1px solid transparent !important; border-left: 3px solid transparent !important;
@@ -170,11 +170,11 @@ def inject_shared_css():
       .page-header {
         display: flex; align-items: center; gap: 10px;
         background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 10px;
-        padding: .5rem .85rem; margin-bottom: .5rem;
+        padding: .3rem .7rem; margin-bottom: .35rem;
         box-shadow: 0 1px 2px rgba(22,50,79,.05);
       }
       .page-header .ph-icon {
-        width: 30px; height: 30px; min-width: 30px; border-radius: 8px;
+        width: 24px; height: 24px; min-width: 24px; border-radius: 7px;
         background: #EEF2F4; color: #16324F;
         display: flex; align-items: center; justify-content: center; font-size: 1rem;
       }
@@ -186,16 +186,16 @@ def inject_shared_css():
       }
 
       /* 篩選器：壓縮高度、統一字級 */
-      div[data-testid="stSelectbox"] label p { font-size: .68rem !important; color: #7A8890 !important; margin-bottom: 2px !important; }
+      div[data-testid="stSelectbox"] label p { font-size: .64rem !important; color: #7A8890 !important; margin-bottom: 0 !important; }
       div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
-        min-height: 30px !important; font-size: .78rem !important;
+        min-height: 26px !important; font-size: .74rem !important;
         border-radius: 7px !important; border-color: #DDE3E6 !important;
       }
 
       /* KPI 卡片：緊湊 + 頂部色條 + 輕陰影 */
       .kpi-card {
         background: #FFFFFF; border: 1px solid #E5E9EB; border-top: 3px solid #3A7CA5;
-        border-radius: 9px; padding: .4rem .6rem .5rem; text-align: center;
+        border-radius: 8px; padding: .3rem .55rem .35rem; text-align: center;
         box-shadow: 0 1px 2px rgba(22,50,79,.05);
       }
       .kpi-card .kpi-label { font-size: .64rem; color: #8A9AA3; margin-bottom: 2px; letter-spacing: .02em; }
@@ -211,8 +211,8 @@ def inject_shared_css():
       }
       div[class*="st-key-chart_card"] {
         background: #FFFFFF !important; border: 1px solid #E5E9EB !important;
-        border-radius: 9px !important; padding: .55rem .65rem .15rem .65rem !important;
-        margin-bottom: .5rem !important; box-shadow: 0 1px 3px rgba(22,50,79,.05) !important;
+        border-radius: 8px !important; padding: .35rem .5rem .05rem .5rem !important;
+        margin-bottom: .35rem !important; box-shadow: 0 1px 3px rgba(22,50,79,.05) !important;
         transition: box-shadow .15s !important;
       }
       div[class*="st-key-chart_card"]:hover {
