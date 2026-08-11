@@ -176,7 +176,7 @@ def render():
             fig1, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 2: 節能標章取得百分比 (完美等寬 + 標籤文字) ---
+    # --- 區塊 2: 節能標章取得百分比 (完美等寬: 每圈厚度嚴格等於 0.07) ---
     with col2:
         st.markdown(
             '<div class="block-card-title">2 節能標章取得百分比</div>',
@@ -201,12 +201,13 @@ def render():
 
         fig2 = go.Figure()
 
-        # 透過 (R_out^2 - R_in^2) 面積恒定公式計算幾何半徑，確保 4 圈實體視覺寬度完全一致
+        # 等差數列設定：(radius - hole) 恆等於 0.07，確保四圈實體線條寬度完全相同
+        # 圈與圈之間留 0.03 的間隔
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "hole": 0.880, "radius": 1.000, "label_y": 0.94},  # 最外圈
-            {"cat": "VRV", "color": "#90CAF9", "hole": 0.742, "radius": 0.860, "label_y": 0.80},
-            {"cat": "SA", "color": "#FFCC80", "hole": 0.583, "radius": 0.720, "label_y": 0.65},
-            {"cat": "RA", "color": "#C5E1A5", "hole": 0.374, "radius": 0.560, "label_y": 0.47},   # 最內圈
+            {"cat": "MA", "color": "#E1BEE7", "radius": 1.00, "hole": 0.93, "label_y": 0.965}, # 寬度 0.07
+            {"cat": "VRV", "color": "#90CAF9", "radius": 0.90, "hole": 0.83, "label_y": 0.865}, # 寬度 0.07
+            {"cat": "SA", "color": "#FFCC80", "radius": 0.80, "hole": 0.73, "label_y": 0.765}, # 寬度 0.07
+            {"cat": "RA", "color": "#C5E1A5", "radius": 0.70, "hole": 0.63, "label_y": 0.665}, # 寬度 0.07
         ]
 
         for cfg in ring_cfgs:
@@ -234,18 +235,18 @@ def render():
                 )
             )
 
-            # 在圓環上方加入各顏色代表的設備名稱與數值標籤
+            # 在圓環上方加入設備名稱與百分比標籤
             fig2.add_annotation(
                 x=0.5,
                 y=cfg["label_y"],
                 text=f"<b>{c_name}</b>: {val:.1f}%",
                 font=dict(size=9, color="#475569"),
                 showarrow=False,
-                bgcolor="rgba(255,255,255,0.7)",
+                bgcolor="rgba(255,255,255,0.75)",
                 borderpad=1
             )
 
-        # 中央顯示總體數字
+        # 中央顯示整體百分比數字
         fig2.add_annotation(
             text=f"<b>{coverage_rate_num:.0f}%</b>",
             x=0.5,
@@ -263,7 +264,7 @@ def render():
             fig2, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 3: 各類別能效分級數量統計 (換成標準甜甜圈圖 + 中央大數字) ---
+    # --- 區塊 3: 各類別能效分級數量統計 (標準甜甜圈圖 + 中央大數字) ---
     with col3:
         st.markdown(
             '<div class="block-card-title">3 各類別能效分級數量統計</div>',
@@ -300,7 +301,6 @@ def render():
                 )
             ]
         )
-        # 中央大數字標示 (同區塊一二)
         fig3.add_annotation(
             text=f"<b>{total_badge_certs}</b> <span style='font-size:16px;'>張</span>",
             x=0.5,
