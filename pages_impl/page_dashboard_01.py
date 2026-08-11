@@ -1,124 +1,472 @@
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from pages_impl._data import load_full_table, render_filter_bar
+from pages_impl._shared import render_kpi_row, render_page_header
 
-# ==========================================
-# 1. 第一種：多層同心圓環圖 (節能標章取得百分比)
-# ==========================================
-def create_multi_ring_chart(rates_dict, total_avg_rate):
-    """
-    rates_dict: 各類別百分比，例如 {'MA': 100.0, 'VRV': 62.2, 'SA': 70.0, 'RA': 78.6}
-    total_avg_rate: 中央顯示的整體百分比 (例如 72)
-    """
-    fig = go.Figure()
+CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-    # 設定各圈層由外到內的半徑 (hole, radius) 與顏色
-    ring_configs = [
-        {"name": "MA", "color": "#E1BEE7", "hole": 0.82, "radius": 0.98},   # 紫色 (最外層)
-        {"name": "VRV", "color": "#90CAF9", "hole": 0.68, "radius": 0.80},  # 藍色
-        {"name": "SA", "color": "#FFCC80", "hole": 0.54, "radius": 0.66},   # 橘色
-        {"name": "RA", "color": "#C5E1A5", "hole": 0.40, "radius": 0.52},   # 綠色 (最內層)
-    ]
+# 色彩配置 (紅色已調整為淡橘色)
+COLOR_BLUE = "#3B82F6"  # 主藍色
+COLOR_GREEN = "#10B981"  # 草綠色
+COLOR_LIGHT_ORANGE = "#FB923C"  # 淡橘色 (原紅色警示)
+COLOR_ORANGE = "#F59E0B"  # 深橘色
+COLOR_PURPLE = "#A855F7"  # 紫色
 
-    for cfg in ring_configs:
-        cat = cfg["name"]
-        val = rates_dict.get(cat, 0)
-        rest = max(0, 100 - val)
+MARGIN = dict(t=35, b=10, l=10, r=10)
 
-        # 繪製單一圓環
-        fig.add_trace(go.Pie(
-            values=[val, rest],
-            labels=[f"{cat}, {val:.1f}%", ""],
-            hole=cfg["hole"],
-            sort=False,
-            direction="clockwise",
-            rotation=90,  # 垂直向上為起點
-            marker=dict(colors=[cfg["color"], "#F0F0F0"]), # 完成部分用指定色，剩餘部分用淺灰
-            textinfo="none", # 自訂標籤顯示
-            hoverinfo="label",
-            domain=dict(x=[0.5 - cfg["radius"]/2, 0.5 + cfg["radius"]/2],
-                        y=[0.5 - cfg["radius"]/2, 0.5 + cfg["radius"]/2]),
-            showlegend=False
-        ))
 
-        # 加入文字標籤 (放置在圓環上方)
-        # 可根據需求以 add_annotation 自訂文字位置
+def _half_year_bucket(dt):
+    if pd.isna(dt):
+        return None
+    try:
+        year, month = dt.year, dt.month
+        half = "上半" if month <= 6 else "下半"
+        return f"{year}{half}"
+    except AttributeError:
+        return None
 
-    # 中央 KPI 數字
-    fig.add_annotation(
-        text=f"<b>{total_avg_rate}%</b>",
-        x=0.5, y=0.5,
-        font=dict(size=36, color="#000000", family="Arial"),
-        showarrow=False
+
+def inject_custom_style():
+    """注入面板外觀 CSS 樣式"""
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-color: #EBF3FA;
+        }
+        .block-card-title {
+            color: #1E3A8A;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        /* 卡片邊框樣式 */
+        div[data-testid="stVerticalBlock"] > div:has(div.block-card-title) {
+            background-color: #FFFFFF !important;
+            border: 1.5px solid #CBD5E1 !important;
+            border-radius: 8px !important;
+            padding: 12px !important;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.03);
+        }
+        </style>
+    """,
+        unsafe_allow_html=True,
     )
 
-    fig.update_layout(
-        title=dict(text="節能標章取得百分比", x=0.5, xanchor="center", font=dict(size=18, color="#555555")),
-        height=320,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
+
+def render():
+    inject_custom_style()
+    render_page_header("01")
+
+    df_all = load_full_table()
+    if df_all.empty:
+        st.warning(
+            "目前讀不到資料，請確認 Secrets 設定（gcp_service_account）是否正確。"
+        )
+        return
+
+    df = render_filter_bar(df_all, key_prefix="p01")
+
+    # 安全的日期型態轉換，避免 AttributeError
+    if "商品驗證有效期限_dt" in df.columns:
+        df["商品驗證有效期限_dt"] = pd.to_datetime(
+            df["商品驗證有效期限_dt"], errors="coerce"
+        )
+    if "節能標章有效日期_dt" in df.columns:
+        df["節能標章有效日期_dt"] = pd.to_datetime(
+            df["節能標章有效日期_dt"], errors="coerce"
+        )
+
+    # KPI 數據計算
+    cert_valid = int((df["商品驗證有效"]).sum()) if "商品驗證有效" in df.columns else 0
+    badge_valid = (
+        int((df["標章覆蓋狀態"] == "標章有效").sum())
+        if "標章覆蓋狀態" in df.columns
+        else 0
     )
-    return fig
-
-
-# ==========================================
-# 2. 第二種：單層甜甜圈圖 + 中央大字 (商品驗證有效張數)
-# ==========================================
-def create_donut_chart(data_dict, total_count):
-    """
-    data_dict: 各類別數量，例如 {'VRV': 30, 'RA': 17, 'SA': 11, 'MA': 5}
-    total_count: 中央顯示的總張數 (例如 63)
-    """
-    labels = [f"{k}, {v}" for k, v in data_dict.items()]
-    values = list(data_dict.values())
-    
-    # 圖二為統一的淺藍色系，中間以白色邊線分隔
-    colors = ["#9EE0F5"] * len(values)
-
-    fig = go.Figure(data=[go.Pie(
-        labels=labels,
-        values=values,
-        hole=0.72, # 環狀寬度
-        textinfo="label",
-        textposition="inside",
-        insidetextorientation="horizontal",
-        marker=dict(colors=colors, line=dict(color="#FFFFFF", width=3)),
-        showlegend=False,
-        sort=False
-    )])
-
-    # 中央數字與單位
-    fig.add_annotation(
-        text=f"<b>{total_count}</b> <span style='font-size:20px; color:#333;'>張</span>",
-        x=0.5, y=0.5,
-        font=dict(size=42, color="#000000"),
-        showarrow=False
+    due_90 = int(
+        (
+            (df["商品驗證風險狀態"] == "90天內")
+            | (df["節能標章風險狀態"] == "90天內")
+        ).sum()
+    )
+    valid_models = int(df["室外機型號"].nunique()) if "室外機型號" in df.columns else 0
+    badge_models = (
+        int(df.loc[df["標章覆蓋狀態"] == "標章有效", "室外機型號"].nunique())
+        if "標章覆蓋狀態" in df.columns
+        else 0
+    )
+    coverage_rate_num = (
+        (badge_models / valid_models * 100) if valid_models else 0
+    )
+    coverage_rate_str = (
+        f"{coverage_rate_num:.1f}%" if valid_models else "—"
     )
 
-    fig.update_layout(
-        title=dict(text="商品驗證登錄證書有效張數", x=0.5, xanchor="center", font=dict(size=18, color="#555555")),
-        height=320,
-        margin=dict(t=50, b=20, l=20, r=20),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-    return fig
+    render_kpi_row([
+        ("商品驗證有效張數", cert_valid),
+        ("節能標章有效張數", badge_valid),
+        ("90天內到期張數", due_90),
+        ("有效商品型號數", valid_models),
+        ("已取得標章型號數", badge_models),
+        ("整體標章取得率", coverage_rate_str),
+    ])
 
+    st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
 
-# ==========================================
-# Streamlit 展示測試
-# ==========================================
-st.set_page_config(layout="wide")
+    # ==================================================================
+    # 第一列：區塊 1, 2, 4 (全面改為環狀圖)
+    # ==================================================================
+    col1, col2, col4 = st.columns(3)
 
-col1, col2 = st.columns(2)
+    # --- 區塊 1: 商品驗證登錄證書有效張數 (單層甜甜圈圖) ---
+    with col1:
+        st.markdown(
+            '<div class="block-card-title">1 商品驗證登錄證書有效張數</div>',
+            unsafe_allow_html=True,
+        )
+        g1 = (
+            df[df["商品驗證有效"]]
+            .groupby("類別")
+            .size()
+            .reindex(CATEGORY_ORDER, fill_value=0)
+        )
 
-with col1:
-    rates = {'MA': 100.0, 'VRV': 62.2, 'SA': 70.0, 'RA': 78.6}
-    fig1 = create_multi_ring_chart(rates_dict=rates, total_avg_rate=72)
-    st.plotly_chart(fig1, use_container_width=True)
+        labels1 = [f"{k}, {v}" for k, v in g1.items()]
+        fig1 = go.Figure(
+            data=[
+                go.Pie(
+                    labels=labels1,
+                    values=g1.values,
+                    hole=0.70,
+                    textinfo="label",
+                    textposition="inside",
+                    insidetextorientation="horizontal",
+                    marker=dict(
+                        colors=["#9EE0F5"] * len(g1),
+                        line=dict(color="#FFFFFF", width=3),
+                    ),
+                    showlegend=False,
+                    sort=False,
+                )
+            ]
+        )
+        fig1.add_annotation(
+            text=f"<b>{cert_valid}</b> <span style='font-size:16px;'>張</span>",
+            x=0.5,
+            y=0.5,
+            font=dict(size=32, color="#1E293B"),
+            showarrow=False,
+        )
+        fig1.update_layout(
+            height=220,
+            margin=dict(t=10, b=10, l=10, r=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(
+            fig1, use_container_width=True, config={"displayModeBar": False}
+        )
 
-with col2:
-    counts = {'VRV': 30, 'RA': 17, 'SA': 11, 'MA': 5}
-    fig2 = create_donut_chart(data_dict=counts, total_count=63)
-    st.plotly_chart(fig2, use_container_width=True)
+    # --- 區塊 2: 節能標章取得百分比 (多層同心圓環圖) ---
+    with col2:
+        st.markdown(
+            '<div class="block-card-title">2 節能標章取得百分比</div>',
+            unsafe_allow_html=True,
+        )
+        badge_cnt = (
+            df[df["標章覆蓋狀態"] == "標章有效"]
+            .groupby("類別")["室外機型號"]
+            .nunique()
+            .reindex(CATEGORY_ORDER, fill_value=0)
+        )
+        valid_cnt = (
+            df.groupby("類別")["室外機型號"]
+            .nunique()
+            .reindex(CATEGORY_ORDER, fill_value=0)
+        )
+
+        # 計算各類別取得率
+        rates = {}
+        for cat in CATEGORY_ORDER:
+            tot = valid_cnt.get(cat, 0)
+            rates[cat] = (badge_cnt.get(cat, 0) / tot * 100) if tot > 0 else 0
+
+        fig2 = go.Figure()
+        ring_cfgs = [
+            {"cat": "MA", "color": "#E1BEE7", "hole": 0.82, "radius": 0.98},
+            {"cat": "VRV", "color": "#90CAF9", "hole": 0.68, "radius": 0.80},
+            {"cat": "SA", "color": "#FFCC80", "hole": 0.54, "radius": 0.66},
+            {"cat": "RA", "color": "#C5E1A5", "hole": 0.40, "radius": 0.52},
+        ]
+
+        for cfg in ring_cfgs:
+            c_name = cfg["cat"]
+            val = rates.get(c_name, 0)
+            fig2.add_trace(
+                go.Pie(
+                    values=[val, max(0, 100 - val)],
+                    labels=[f"{c_name}, {val:.1f}%", ""],
+                    hole=cfg["hole"],
+                    sort=False,
+                    direction="clockwise",
+                    rotation=90,
+                    marker=dict(colors=[cfg["color"], "#F1F5F9"]),
+                    textinfo="none",
+                    hoverinfo="label",
+                    domain=dict(
+                        x=[0.5 - cfg["radius"] / 2, 0.5 + cfg["radius"] / 2],
+                        y=[0.5 - cfg["radius"] / 2, 0.5 + cfg["radius"] / 2],
+                    ),
+                    showlegend=False,
+                )
+            )
+
+        fig2.add_annotation(
+            text=f"<b>{coverage_rate_num:.0f}%</b>",
+            x=0.5,
+            y=0.5,
+            font=dict(size=30, color="#1E293B"),
+            showarrow=False,
+        )
+        fig2.update_layout(
+            height=220,
+            margin=dict(t=10, b=10, l=10, r=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(
+            fig2, use_container_width=True, config={"displayModeBar": False}
+        )
+
+    # --- 區塊 4: 各類別 能效分級數量統計 (甜甜圈圖) ---
+    with col4:
+        st.markdown(
+            '<div class="block-card-title">4 各類別 能效分級數量統計</div>',
+            unsafe_allow_html=True,
+        )
+        sub_eff = df[df["標章覆蓋狀態"] == "標章有效"]
+        grade_counts = sub_eff.groupby("能源效率分級").size()
+
+        labels4 = [
+            f"{k}級: {v}張"
+            for k, v in grade_counts.items()
+            if str(k).strip() != ""
+        ]
+        values4 = [
+            v for k, v in grade_counts.items() if str(k).strip() != ""
+        ]
+
+        fig4 = go.Figure(
+            data=[
+                go.Pie(
+                    labels=labels4,
+                    values=values4,
+                    hole=0.65,
+                    textinfo="label+percent",
+                    marker=dict(
+                        colors=[
+                            COLOR_GREEN,
+                            COLOR_BLUE,
+                            COLOR_ORANGE,
+                            COLOR_PURPLE,
+                        ],
+                        line=dict(color="#FFFFFF", width=2),
+                    ),
+                    showlegend=False,
+                )
+            ]
+        )
+        fig4.add_annotation(
+            text="<b>能效分級</b>",
+            x=0.5,
+            y=0.5,
+            font=dict(size=18, color="#475569"),
+            showarrow=False,
+        )
+        fig4.update_layout(
+            height=220,
+            margin=dict(t=10, b=10, l=10, r=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(
+            fig4, use_container_width=True, config={"displayModeBar": False}
+        )
+
+    st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
+
+    # ==================================================================
+    # 第二列：區塊 3, 5, 6
+    # ==================================================================
+    col3, col5, col6 = st.columns(3)
+
+    # --- 區塊 3: 後續半年到期張數統計 ---
+    with col3:
+        st.markdown(
+            '<div class="block-card-title">3 後續半年到期張數統計</div>',
+            unsafe_allow_html=True,
+        )
+        today = pd.Timestamp.now().normalize()
+        cert_future = df[df["商品驗證有效期限_dt"] >= today].copy()
+        badge_future = df[df["節能標章有效日期_dt"] >= today].copy()
+
+        cert_future["區間"] = cert_future["商品驗證有效期限_dt"].apply(
+            _half_year_bucket
+        )
+        badge_future["區間"] = badge_future["節能標章有效日期_dt"].apply(
+            _half_year_bucket
+        )
+
+        buckets = sorted(
+            set(cert_future["區間"].dropna())
+            | set(badge_future["區間"].dropna())
+        )[:6]
+        c1 = cert_future.groupby("區間").size().reindex(buckets, fill_value=0)
+        c2 = badge_future.groupby("區間").size().reindex(buckets, fill_value=0)
+
+        fig3 = go.Figure()
+        fig3.add_bar(
+            name="商品驗證到期",
+            x=buckets,
+            y=c1.values,
+            marker_color=COLOR_BLUE,
+            text=c1.values,
+            textposition="outside",
+        )
+        fig3.add_bar(
+            name="節能標章到期",
+            x=buckets,
+            y=c2.values,
+            marker_color=COLOR_GREEN,
+            text=c2.values,
+            textposition="outside",
+        )
+        fig3.update_layout(
+            barmode="group",
+            height=220,
+            margin=MARGIN,
+            legend=dict(
+                orientation="h",
+                y=1.25,
+                x=0,
+                font=dict(size=9, color="#4B5563"),
+            ),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            yaxis=dict(
+                showgrid=True, gridcolor="#F1F5F9", title=None, zeroline=False
+            ),
+            xaxis=dict(showgrid=False, tickangle=-25),
+        )
+        st.plotly_chart(
+            fig3, use_container_width=True, config={"displayModeBar": False}
+        )
+
+    # --- 區塊 5: 各類別 CSPF 實測/標示分布 (警示色改淡橘色) ---
+    with col5:
+        st.markdown(
+            '<div class="block-card-title">5 各類別 CSPF 實測/標示 百分比分布</div>',
+            unsafe_allow_html=True,
+        )
+        sub_cspf = df[df["CSPF風險區間"].notna()]
+        pivot = (
+            sub_cspf.groupby(["類別", "CSPF風險區間"])
+            .size()
+            .unstack(fill_value=0)
+            .reindex(CATEGORY_ORDER, fill_value=0)
+        )
+
+        order = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
+        # 注意：<100% 風險色已替換為 COLOR_LIGHT_ORANGE (淡橘色)
+        colors5 = {
+            "<100%": COLOR_LIGHT_ORANGE,
+            "100-102.9%": COLOR_BLUE,
+            "103-105.9%": COLOR_GREEN,
+            "≥106%": COLOR_PURPLE,
+        }
+
+        fig5 = go.Figure()
+        for bucket in order:
+            if bucket in pivot.columns:
+                fig5.add_bar(
+                    name=bucket,
+                    y=CATEGORY_ORDER,
+                    x=pivot[bucket].values,
+                    orientation="h",
+                    marker_color=colors5[bucket],
+                    text=pivot[bucket].values,
+                    textposition="inside",
+                )
+        fig5.update_layout(
+            barmode="stack",
+            height=220,
+            margin=MARGIN,
+            legend=dict(
+                orientation="h",
+                y=1.25,
+                x=0,
+                font=dict(size=8, color="#4B5563"),
+                traceorder="reversed",
+            ),
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+            xaxis=dict(
+                showgrid=True, gridcolor="#F1F5F9", title=None, zeroline=False
+            ),
+        )
+        st.plotly_chart(
+            fig5, use_container_width=True, config={"displayModeBar": False}
+        )
+
+    # --- 區塊 6: 90天內即將到期清單 ---
+    with col6:
+        st.markdown(
+            '<div class="block-card-title">6 90天內即將到期清單</div>',
+            unsafe_allow_html=True,
+        )
+        due = df[
+            (df["商品驗證風險狀態"] == "90天內")
+            | (df["節能標章風險狀態"] == "90天內")
+        ].copy()
+
+        rows = []
+        for _, r in due.iterrows():
+            if r.get("商品驗證風險狀態") == "90天內":
+                rows.append({
+                    "證書類型": "商品驗證",
+                    "證書編號": r.get("商品驗證證書編號"),
+                    "型號": r.get("室外機型號"),
+                    "有效日期": r.get("商品驗證有效期限"),
+                    "剩餘天數": (
+                        int(r["商品驗證剩餘天數"])
+                        if pd.notna(r.get("商品驗證剩餘天數"))
+                        else None
+                    ),
+                })
+            if r.get("節能標章風險狀態") == "90天內":
+                rows.append({
+                    "證書類型": "節能標章",
+                    "證書編號": r.get("節能標章證書編號"),
+                    "型號": r.get("室外機型號"),
+                    "有效日期": r.get("節能標章有效日期"),
+                    "剩餘天數": (
+                        int(r["節能標章剩餘天數"])
+                        if pd.notna(r.get("節能標章剩餘天數"))
+                        else None
+                    ),
+                })
+
+        if rows:
+            due_df = pd.DataFrame(rows).sort_values("剩餘天數")
+            due_df = due_df.drop_duplicates(subset=["證書編號"], keep="first")
+            due_df = due_df.drop(columns=["剩餘天數"])
+        else:
+            due_df = pd.DataFrame(
+                columns=["證書類型", "證書編號", "型號", "有效日期"]
+            )
+
+        st.dataframe(
+            due_df, use_container_width=True, hide_index=True, height=220
+        )
