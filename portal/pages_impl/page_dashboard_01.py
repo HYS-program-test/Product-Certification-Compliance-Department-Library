@@ -143,4 +143,6 @@ def render():
                 })
         due_df = pd.DataFrame(rows).sort_values("剩餘天數") if rows else pd.DataFrame(
             columns=["證書類型", "證書編號", "類別", "型號", "有效日期", "剩餘天數"])
+        due_df = due_df.drop_duplicates(subset=["證書編號"], keep="first")
+        due_df = due_df.drop(columns=["類別", "剩餘天數"])
         st.dataframe(due_df, use_container_width=True, hide_index=True, height=145)
