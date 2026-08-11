@@ -6,12 +6,12 @@ from pages_impl._shared import render_kpi_row, render_page_header
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 色彩配置 (紅色已調整為淡橘色)
-COLOR_BLUE = "#3B82F6"  # 主藍色
-COLOR_GREEN = "#10B981"  # 草綠色
-COLOR_LIGHT_ORANGE = "#FB923C"  # 淡橘色 (原紅色警示)
-COLOR_ORANGE = "#F59E0B"  # 深橘色
-COLOR_PURPLE = "#A855F7"  # 紫色
+# 色彩配置
+COLOR_BLUE = "#3B82F6"
+COLOR_GREEN = "#10B981"
+COLOR_LIGHT_ORANGE = "#FB923C"
+COLOR_ORANGE = "#F59E0B"
+COLOR_PURPLE = "#A855F7"
 
 MARGIN = dict(t=35, b=10, l=10, r=10)
 
@@ -28,7 +28,6 @@ def _half_year_bucket(dt):
 
 
 def inject_custom_style():
-    """注入面板外觀 CSS 樣式"""
     st.markdown(
         """
         <style>
@@ -41,7 +40,6 @@ def inject_custom_style():
             font-weight: 700;
             margin-bottom: 6px;
         }
-        /* 卡片邊框樣式 */
         div[data-testid="stVerticalBlock"] > div:has(div.block-card-title) {
             background-color: #FFFFFF !important;
             border: 1.5px solid #CBD5E1 !important;
@@ -68,7 +66,6 @@ def render():
 
     df = render_filter_bar(df_all, key_prefix="p01")
 
-    # 安全的日期型態轉換，避免 AttributeError
     if "商品驗證有效期限_dt" in df.columns:
         df["商品驗證有效期限_dt"] = pd.to_datetime(
             df["商品驗證有效期限_dt"], errors="coerce"
@@ -78,7 +75,6 @@ def render():
             df["節能標章有效日期_dt"], errors="coerce"
         )
 
-    # KPI 數據計算
     cert_valid = int((df["商品驗證有效"]).sum()) if "商品驗證有效" in df.columns else 0
     badge_valid = (
         int((df["標章覆蓋狀態"] == "標章有效").sum())
@@ -116,7 +112,7 @@ def render():
     st.markdown('<div style="height:.2rem"></div>', unsafe_allow_html=True)
 
     # ==================================================================
-    # 第一列：區塊 1, 2, 4 (全面改為環狀圖)
+    # 第一列：區塊 1, 2, 4
     # ==================================================================
     col1, col2, col4 = st.columns(3)
 
@@ -145,7 +141,7 @@ def render():
                     insidetextorientation="horizontal",
                     marker=dict(
                         colors=["#9EE0F5"] * len(g1),
-                        line=dict(color="#FFFFFF", width=3),
+                        line=dict(color="#FFFFFF", width=3),  # 加粗白線邊框
                     ),
                     showlegend=False,
                     sort=False,
@@ -169,7 +165,7 @@ def render():
             fig1, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 2: 節能標章取得百分比 (多層同心圓環圖) ---
+    # --- 區塊 2: 節能標章取得百分比 (多層同心圓環圖 + 白線分隔) ---
     with col2:
         st.markdown(
             '<div class="block-card-title">2 節能標章取得百分比</div>',
@@ -187,7 +183,6 @@ def render():
             .reindex(CATEGORY_ORDER, fill_value=0)
         )
 
-        # 計算各類別取得率
         rates = {}
         for cat in CATEGORY_ORDER:
             tot = valid_cnt.get(cat, 0)
@@ -212,7 +207,11 @@ def render():
                     sort=False,
                     direction="clockwise",
                     rotation=90,
-                    marker=dict(colors=[cfg["color"], "#F1F5F9"]),
+                    # 加入白線邊框 (line width=3) 達到與區塊 1 相同的白線間格效果
+                    marker=dict(
+                        colors=[cfg["color"], "#F1F5F9"],
+                        line=dict(color="#FFFFFF", width=3),
+                    ),
                     textinfo="none",
                     hoverinfo="label",
                     domain=dict(
@@ -240,50 +239,55 @@ def render():
             fig2, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 4: 各類別 能效分級數量統計 (甜甜圈圖) ---
+    # --- 區塊 4: 各類別 能效分級數量統計 (Sunburst / 多層圓環圖展現各類別) ---
     with col4:
         st.markdown(
             '<div class="block-card-title">4 各類別 能效分級數量統計</div>',
             unsafe_allow_html=True,
         )
         sub_eff = df[df["標章覆蓋狀態"] == "標章有效"]
-        grade_counts = sub_eff.groupby("能源效率分級").size()
-
-        labels4 = [
-            f"{k}級: {v}張"
-            for k, v in grade_counts.items()
-            if str(k).strip() != ""
-        ]
-        values4 = [
-            v for k, v in grade_counts.items() if str(k).strip() != ""
-        ]
+        
+        # 建立類別 (內環) -> 能效分級 (外環) 的多層級資料
+        cat_grade_df = sub_eff.groupby(["類別", "能源效率分級"]).size().reset_index(name="張數")
+        
+        ids = []
+        labels = []
+        parents = []
+        values = []
+        
+        # 內層：各類別總數
+        for cat in CATEGORY_ORDER:
+            c_tot = cat_grade_df[cat_grade_df["類別"] == cat]["張數"].sum()
+            if c_tot > 0:
+                ids.append(cat)
+                labels.append(cat)
+                parents.append("")
+                values.append(c_tot)
+        
+        # 外層：各類別下的能效分級細項
+        for _, r in cat_grade_df.iterrows():
+            cat = r["類別"]
+            grade = str(r["能源效率分級"]).strip()
+            cnt = r["張數"]
+            if grade != "" and cnt > 0:
+                ids.append(f"{cat}_{grade}")
+                labels.append(f"{grade}級: {cnt}張")
+                parents.append(cat)
+                values.append(cnt)
 
         fig4 = go.Figure(
-            data=[
-                go.Pie(
-                    labels=labels4,
-                    values=values4,
-                    hole=0.65,
-                    textinfo="label+percent",
-                    marker=dict(
-                        colors=[
-                            COLOR_GREEN,
-                            COLOR_BLUE,
-                            COLOR_ORANGE,
-                            COLOR_PURPLE,
-                        ],
-                        line=dict(color="#FFFFFF", width=2),
-                    ),
-                    showlegend=False,
+            go.Sunburst(
+                ids=ids,
+                labels=labels,
+                parents=parents,
+                values=values,
+                branchvalues="total",
+                insidetextorientation="horizontal",
+                marker=dict(
+                    colorscale="Blues",
+                    line=dict(color="#FFFFFF", width=2)
                 )
-            ]
-        )
-        fig4.add_annotation(
-            text="<b>能效分級</b>",
-            x=0.5,
-            y=0.5,
-            font=dict(size=18, color="#475569"),
-            showarrow=False,
+            )
         )
         fig4.update_layout(
             height=220,
@@ -364,7 +368,7 @@ def render():
             fig3, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 5: 各類別 CSPF 實測/標示分布 (警示色改淡橘色) ---
+    # --- 區塊 5: 各類別 CSPF 實測/標示分布 ---
     with col5:
         st.markdown(
             '<div class="block-card-title">5 各類別 CSPF 實測/標示 百分比分布</div>',
@@ -379,7 +383,6 @@ def render():
         )
 
         order = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
-        # 注意：<100% 風險色已替換為 COLOR_LIGHT_ORANGE (淡橘色)
         colors5 = {
             "<100%": COLOR_LIGHT_ORANGE,
             "100-102.9%": COLOR_BLUE,
