@@ -89,7 +89,7 @@ def render():
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    col4, col5 = st.columns(2)
+    col4, col5, col6 = st.columns(3)
 
     with col4, st.container(key="chart_card_01_4"):
         st.markdown('<div class="block-card-title">4　各類別 能效分級數量統計（節能標章）</div>', unsafe_allow_html=True)
@@ -102,7 +102,7 @@ def render():
                 continue
             fig.add_bar(name=f"能效分級 {grade}", y=CATEGORY_ORDER, x=pivot[grade].values,
                         orientation="h", marker_color=colors.get(str(grade), "#4472C4"))
-        fig.update_layout(barmode="stack", height=155, margin=MARGIN, legend=LEGEND_TOP,
+        fig.update_layout(barmode="stack", height=145, margin=MARGIN, legend=LEGEND_TOP,
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -119,12 +119,12 @@ def render():
                 continue
             fig.add_bar(name=bucket, y=CATEGORY_ORDER, x=pivot[bucket].values,
                         orientation="h", marker_color=colors[bucket])
-        fig.update_layout(barmode="stack", height=155, margin=MARGIN,
+        fig.update_layout(barmode="stack", height=145, margin=MARGIN,
                            legend=dict(orientation="h", y=1.22, x=0, font=dict(size=9), traceorder="reversed"),
                            plot_bgcolor="white", paper_bgcolor="white")
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    with st.container(key="chart_card_01_6"):
+    with col6, st.container(key="chart_card_01_6"):
         st.markdown('<div class="block-card-title">6　90天內即將到期清單</div>', unsafe_allow_html=True)
         due = df[(df["商品驗證風險狀態"] == "90天內") | (df["節能標章風險狀態"] == "90天內")].copy()
         rows = []
@@ -143,4 +143,4 @@ def render():
                 })
         due_df = pd.DataFrame(rows).sort_values("剩餘天數") if rows else pd.DataFrame(
             columns=["證書類型", "證書編號", "類別", "型號", "有效日期", "剩餘天數"])
-        st.dataframe(due_df, use_container_width=True, hide_index=True, height=115)
+        st.dataframe(due_df, use_container_width=True, hide_index=True, height=145)

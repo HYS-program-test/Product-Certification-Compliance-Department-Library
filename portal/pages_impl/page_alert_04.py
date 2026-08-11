@@ -64,7 +64,7 @@ def render():
         low["CSPF實測標示比"] = (low["CSPF實測標示比_num"] * 100).round(1).astype(str) + "%"
         st.dataframe(
             low[["類別", "室外機型號", "CSPF_實測", "CSPF_標示", "CSPF實測標示比", "能源效率分級"]],
-            use_container_width=True, hide_index=True, height=260,
+            use_container_width=True, hide_index=True, height=160,
         )
 
     with col_d, st.container(key="chart_card_04_d"):
