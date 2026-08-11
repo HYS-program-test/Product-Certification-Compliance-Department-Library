@@ -11,38 +11,31 @@ PAGE_META = {
     "08": {"icon": "🔁", "title": "生命週期審核", "sub": "到期清單 → 展延決策 → 排程寄信"},
 }
 
-_STYLE = """
-<style>
-  .page-header {
-    display: flex; align-items: center; gap: 14px;
-    background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 12px;
-    padding: 1rem 1.25rem; margin-bottom: 1rem;
-  }
-  .page-header .ph-icon {
-    width: 42px; height: 42px; min-width: 42px; border-radius: 10px;
-    background: #EEF2F4; color: #16324F;
-    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
-  }
-  .page-header .ph-title {
-    font-size: 1.15rem; font-weight: 700; color: #16324F; line-height: 1.3;
-  }
-  .page-header .ph-sub {
-    font-size: .8rem; color: #8A9AA3; margin-top: 2px;
-  }
-</style>
-"""
-
 
 def render_page_header(page_id: str, sub_override: str = None):
     meta = PAGE_META.get(page_id, {"icon": "📄", "title": page_id, "sub": ""})
     sub = sub_override if sub_override is not None else meta["sub"]
-    st.markdown(f"""
-    {_STYLE}
-    <div class="page-header">
-      <div class="ph-icon">{meta['icon']}</div>
-      <div>
-        <div class="ph-title">{page_id}　{meta['title']}</div>
-        <div class="ph-sub">{sub}</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    html = (
+        '<div class="page-header">'
+        f'<div class="ph-icon">{meta["icon"]}</div>'
+        '<div>'
+        f'<div class="ph-title">{page_id}　{meta["title"]}</div>'
+        f'<div class="ph-sub">{sub}</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_kpi_row(items):
+    """items: list of (label, value) tuples，畫一排 KPI 卡片（白底、莫蘭迪藍數字）"""
+    cols = st.columns(len(items))
+    for col, (label, value) in zip(cols, items):
+        with col:
+            html = (
+                '<div class="kpi-card">'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-value">{value}</div>'
+                '</div>'
+            )
+            st.markdown(html, unsafe_allow_html=True)

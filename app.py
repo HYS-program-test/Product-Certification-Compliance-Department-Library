@@ -158,6 +158,41 @@ def inject_shared_css():
         color: #6B7A82; font-size: .72rem; padding: .4rem;
         border-top: 1px solid rgba(0,0,0,.08); margin-top: .6rem;
       }
+
+      /* 各分頁統一抬頭 */
+      .page-header {
+        display: flex; align-items: center; gap: 14px;
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 12px;
+        padding: 1rem 1.25rem; margin-bottom: 1rem;
+      }
+      .page-header .ph-icon {
+        width: 42px; height: 42px; min-width: 42px; border-radius: 10px;
+        background: #EEF2F4; color: #16324F;
+        display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+      }
+      .page-header .ph-title {
+        font-size: 1.15rem; font-weight: 700; color: #16324F; line-height: 1.3;
+      }
+      .page-header .ph-sub {
+        font-size: .8rem; color: #8A9AA3; margin-top: 2px;
+      }
+
+      /* KPI 卡片 */
+      .kpi-card {
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 10px;
+        padding: .7rem .9rem; text-align: center;
+      }
+      .kpi-card .kpi-label { font-size: .72rem; color: #8A9AA3; margin-bottom: 4px; }
+      .kpi-card .kpi-value { font-size: 1.4rem; font-weight: 700; color: #16324F; }
+
+      /* 區塊卡片 */
+      .block-card-title {
+        font-size: .85rem; font-weight: 700; color: #16324F; margin-bottom: .4rem;
+      }
+
+      /* 登入畫面垂直置中 */
+      .st-key-login_wrap { display: flex; align-items: center; justify-content: center; min-height: 82vh; }
+      .st-key-login_wrap > div { width: 100%; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -168,87 +203,87 @@ def inject_shared_css():
 def render_login():
     inject_shared_css()
 
-    _, col, _ = st.columns([1, 1.2, 1])
-    with col:
-        st.markdown("<br>", unsafe_allow_html=True)
-        step = st.session_state["login_step"]
-        error_msg = st.session_state.get("login_error")
+    with st.container(key="login_wrap"):
+        _, col, _ = st.columns([1, 1.2, 1])
+        with col:
+            step = st.session_state["login_step"]
+            error_msg = st.session_state.get("login_error")
 
-        value = login_panel(
-            step=step,
-            error=error_msg,
-            email_hint=st.session_state.get("login_email", ""),
-            key="login_panel_main",
-        )
+            value = login_panel(
+                step=step,
+                error=error_msg,
+                email_hint=st.session_state.get("login_email", ""),
+                key="login_panel_main",
+            )
 
-        if isinstance(value, dict) and value.get("action"):
-            nonce = value.get("nonce")
-            if nonce is not None and nonce != st.session_state.get("last_login_nonce"):
-                st.session_state["last_login_nonce"] = nonce
-                action = value["action"]
+            if isinstance(value, dict) and value.get("action"):
+                nonce = value.get("nonce")
+                if nonce is not None and nonce != st.session_state.get("last_login_nonce"):
+                    st.session_state["last_login_nonce"] = nonce
+                    action = value["action"]
 
-                if action == "send":
-                    email = (value.get("email") or "").strip().lower()
-                    if not email:
-                        st.session_state["login_error"] = "請輸入信箱"
-                    else:
-                        expiry = datetime.now() + timedelta(minutes=5)
-                        matched_email = None
-                        if email in FIXED_CODE_ACCOUNTS:
-                            matched_email = email
+                    if action == "send":
+                        email = (value.get("email") or "").strip().lower()
+                        if not email:
+                            st.session_state["login_error"] = "請輸入信箱"
                         else:
-                            full_email = email + f"@{COMPANY_DOMAIN}" if "@" not in email else email
-                            if full_email in FIXED_CODE_ACCOUNTS:
-                                matched_email = full_email
+                            expiry = datetime.now() + timedelta(minutes=5)
+                            matched_email = None
+                            if email in FIXED_CODE_ACCOUNTS:
+                                matched_email = email
+                            else:
+                                full_email = email + f"@{COMPANY_DOMAIN}" if "@" not in email else email
+                                if full_email in FIXED_CODE_ACCOUNTS:
+                                    matched_email = full_email
 
-                        if matched_email:
-                            code = FIXED_CODE_ACCOUNTS[matched_email]
-                            st.session_state["login_email"] = matched_email
-                            st.session_state["otp_code"] = code
-                            st.session_state["otp_expiry"] = expiry
-                            st.session_state["login_step"] = "code"
-                            st.session_state["login_error"] = None
-                            st.rerun()
-                        elif not email.endswith(f"@{COMPANY_DOMAIN}"):
-                            st.session_state["login_error"] = f"僅接受 @{COMPANY_DOMAIN} 的公司信箱"
-                            log_login(email, False)
-                        else:
-                            code = "".join(random.choices(string.digits, k=6))
-                            ok = send_otp(email, code)
-                            if ok:
-                                st.session_state["login_email"] = email
+                            if matched_email:
+                                code = FIXED_CODE_ACCOUNTS[matched_email]
+                                st.session_state["login_email"] = matched_email
                                 st.session_state["otp_code"] = code
                                 st.session_state["otp_expiry"] = expiry
                                 st.session_state["login_step"] = "code"
                                 st.session_state["login_error"] = None
                                 st.rerun()
+                            elif not email.endswith(f"@{COMPANY_DOMAIN}"):
+                                st.session_state["login_error"] = f"僅接受 @{COMPANY_DOMAIN} 的公司信箱"
+                                log_login(email, False)
                             else:
-                                st.session_state["login_error"] = "驗證碼寄送失敗，請稍後再試"
+                                code = "".join(random.choices(string.digits, k=6))
+                                ok = send_otp(email, code)
+                                if ok:
+                                    st.session_state["login_email"] = email
+                                    st.session_state["otp_code"] = code
+                                    st.session_state["otp_expiry"] = expiry
+                                    st.session_state["login_step"] = "code"
+                                    st.session_state["login_error"] = None
+                                    st.rerun()
+                                else:
+                                    st.session_state["login_error"] = "驗證碼寄送失敗，請稍後再試"
 
-                elif action == "verify":
-                    email = st.session_state["login_email"]
-                    code_input = (value.get("code") or "").strip()
-                    now = datetime.now()
-                    if st.session_state.get("otp_expiry") and now > st.session_state["otp_expiry"]:
-                        st.session_state["login_error"] = "驗證碼已過期，請重新寄送"
+                    elif action == "verify":
+                        email = st.session_state["login_email"]
+                        code_input = (value.get("code") or "").strip()
+                        now = datetime.now()
+                        if st.session_state.get("otp_expiry") and now > st.session_state["otp_expiry"]:
+                            st.session_state["login_error"] = "驗證碼已過期，請重新寄送"
+                            st.session_state["login_step"] = "email"
+                            log_login(email, False)
+                            st.rerun()
+                        elif code_input == st.session_state.get("otp_code"):
+                            st.session_state["logged_in"] = True
+                            st.session_state["username"] = email
+                            st.session_state["login_step"] = "email"
+                            st.session_state["otp_code"] = ""
+                            st.session_state["login_error"] = None
+                            log_login(email, True)
+                            st.rerun()
+                        else:
+                            st.session_state["login_error"] = "驗證碼錯誤，請重新輸入"
+                            log_login(email, False)
+
+                    elif action == "resend":
                         st.session_state["login_step"] = "email"
-                        log_login(email, False)
-                        st.rerun()
-                    elif code_input == st.session_state.get("otp_code"):
-                        st.session_state["logged_in"] = True
-                        st.session_state["username"] = email
-                        st.session_state["login_step"] = "email"
-                        st.session_state["otp_code"] = ""
                         st.session_state["login_error"] = None
-                        log_login(email, True)
-                        st.rerun()
-                    else:
-                        st.session_state["login_error"] = "驗證碼錯誤，請重新輸入"
-                        log_login(email, False)
-
-                elif action == "resend":
-                    st.session_state["login_step"] = "email"
-                    st.session_state["login_error"] = None
 
 
 # ─────────────────────────────────────────────
