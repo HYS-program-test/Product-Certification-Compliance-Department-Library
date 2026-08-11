@@ -176,7 +176,7 @@ def render():
             fig1, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 2: 節能標章取得百分比 (方法 2：嚴格等厚度繪製) ---
+    # --- 區塊 2: 節能標章取得百分比 (粗細調大為 2 倍，W = 0.16) ---
     with col2:
         st.markdown(
             '<div class="block-card-title">2 節能標章取得百分比</div>',
@@ -201,17 +201,17 @@ def render():
 
         fig2 = go.Figure()
 
-        # 精準數值計算：
-        # 厚度 (W) = 0.08, 間隔 (G) = 0.02
-        # 第 1 圈 (MA): R_out = 1.00 -> hole = (1.00 - 0.08) / 1.00 = 0.9200
-        # 第 2 圈 (VRV): R_out = 0.90 -> hole = (0.90 - 0.08) / 0.90 = 0.9111
-        # 第 3 圈 (SA): R_out = 0.80 -> hole = (0.80 - 0.08) / 0.80 = 0.9000
-        # 第 4 圈 (RA): R_out = 0.70 -> hole = (0.70 - 0.08) / 0.70 = 0.8857
+        # 將實體線段厚度 (W) 從 0.08 調大 2 倍至 0.16
+        # 間隔 (G) 為 0.02
+        # 第 1 圈 (MA): R_out = 1.00 -> hole = (1.00 - 0.16) / 1.00 = 0.8400
+        # 第 2 圈 (VRV): R_out = 0.82 -> hole = (0.82 - 0.16) / 0.82 = 0.8049
+        # 第 3 圈 (SA): R_out = 0.64 -> hole = (0.64 - 0.16) / 0.64 = 0.7500
+        # 第 4 圈 (RA): R_out = 0.46 -> hole = (0.46 - 0.16) / 0.46 = 0.6522
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.08) / 1.00, "label_y": 0.96},
-            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.90, "hole": (0.90 - 0.08) / 0.90, "label_y": 0.86},
-            {"cat": "SA", "color": "#FFCC80", "r_out": 0.80, "hole": (0.80 - 0.08) / 0.80, "label_y": 0.76},
-            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.70, "hole": (0.70 - 0.08) / 0.70, "label_y": 0.66},
+            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.96},
+            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.83},
+            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.70},
+            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.57},
         ]
 
         for cfg in ring_cfgs:
@@ -248,7 +248,7 @@ def render():
                 text=f"<b>{c_name}</b>: {val:.1f}%",
                 font=dict(size=8.5, color="#334155"),
                 showarrow=False,
-                bgcolor="rgba(255,255,255,0.8)",
+                bgcolor="rgba(255,255,255,0.85)",
                 borderpad=1
             )
 
@@ -257,7 +257,7 @@ def render():
             text=f"<b>{coverage_rate_num:.0f}%</b>",
             x=0.5,
             y=0.5,
-            font=dict(size=26, color="#1E293B"),
+            font=dict(size=24, color="#1E293B"),
             showarrow=False,
         )
         fig2.update_layout(
@@ -270,7 +270,7 @@ def render():
             fig2, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 3: 各類別能效分級數量統計 (甜甜圈圖 + 中央大數字) ---
+    # --- 區塊 3: 各類別能效分級數量統計 ---
     with col3:
         st.markdown(
             '<div class="block-card-title">3 各類別能效分級數量統計</div>',
