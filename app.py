@@ -129,33 +129,34 @@ def inject_shared_css():
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
-      .block-container { padding-top: 1rem !important; margin-top: 0 !important; max-width: 100% !important; }
+      .block-container { padding-top: 1rem !important; padding-left: .6rem !important; margin-top: 0 !important; max-width: 100% !important; }
       .stApp { background-color: #F7F8F9; }
 
       div[data-testid="stButton"] button {
         border-radius: 8px !important;
       }
-      /* 左側導覽欄：深藍底、直排頁籤按鈕 */
+      /* 左側導覽欄：灰底、直排頁籤按鈕，貼齊左邊 */
       .st-key-nav_col {
-        background: #16324F; border-radius: 12px; padding: .9rem .6rem;
+        background: #E9ECEF; border-radius: 10px; padding: .9rem .5rem;
         height: 100%;
       }
       .st-key-nav_col [data-testid="stVerticalBlock"] { gap: 6px !important; }
       .st-key-nav_col div[data-testid="stButton"] button {
-        background: transparent !important; color: #CBD9E3 !important;
+        background: transparent !important; color: #4A5A63 !important;
         border: 1px solid transparent !important; font-weight: 600 !important;
-        font-size: .8rem !important; padding: .5rem .4rem !important;
-        text-align: left !important; white-space: normal !important;
+        font-size: .82rem !important; padding: .5rem .5rem !important;
+        text-align: left !important; white-space: nowrap !important;
+        overflow: hidden !important; text-overflow: ellipsis !important;
       }
       .st-key-nav_col div[data-testid="stButton"] button:hover {
-        background: rgba(255,255,255,.08) !important; color: #fff !important;
+        background: rgba(22,50,79,.08) !important; color: #16324F !important;
       }
       .st-key-nav_col div[data-testid="stButton"] button[kind="primary"] {
         background: #3A7CA5 !important; color: #fff !important;
       }
       .nav-user {
-        color: #8FA6B8; font-size: .72rem; padding: .4rem;
-        border-top: 1px solid rgba(255,255,255,.12); margin-top: .6rem;
+        color: #6B7A82; font-size: .72rem; padding: .4rem;
+        border-top: 1px solid rgba(0,0,0,.08); margin-top: .6rem;
       }
     </style>
     """, unsafe_allow_html=True)
@@ -166,7 +167,6 @@ def inject_shared_css():
 # ─────────────────────────────────────────────
 def render_login():
     inject_shared_css()
-    st.markdown("#### 商品證書管理入口")
 
     _, col, _ = st.columns([1, 1.2, 1])
     with col:
@@ -309,7 +309,7 @@ def main():
         render_login()
     else:
         inject_shared_css()
-        col_nav, col_content = st.columns([1, 6], gap="medium")
+        col_nav, col_content = st.columns([1.3, 6], gap="small")
         with col_nav:
             render_nav()
         with col_content:

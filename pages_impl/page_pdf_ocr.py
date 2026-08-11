@@ -819,9 +819,8 @@ def render_main():
     init_session()
     inject_css()
 
-    st.markdown("""
-    <div class="main-header"><h1>🗂️ PDF 辨識歸檔系統</h1></div>
-    """, unsafe_allow_html=True)
+    from pages_impl._shared import render_page_header
+    render_page_header("05")
 
     st.caption(f"辨識結果將寫入正式資料表「Total Certificate Management／{DATA_WORKSHEET_NAME}」，PDF 將上傳至正式 S3 資料夾。")
 

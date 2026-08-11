@@ -465,15 +465,8 @@ def render():
     # ----------------------------------------------------------------------------
     # Header
     # ----------------------------------------------------------------------------
-    st.markdown(
-        """
-        <div class="app-header">
-            <h1>PDF拆分工具</h1>
-            <p>一次掃描多份文件 → 自動判斷標題分頁 → 拖曳調整 → 自動命名 → 打包下載</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    from pages_impl._shared import render_page_header
+    render_page_header("06")
 
     st.markdown("##### 上傳")
     uploaded = st.file_uploader("上傳掃描 PDF（可能包含 30~50 頁、多份文件）", type=["pdf"])

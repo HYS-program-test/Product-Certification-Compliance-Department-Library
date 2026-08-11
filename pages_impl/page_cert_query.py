@@ -1295,11 +1295,8 @@ def render_main():
     init_session()
     inject_css()
 
-    st.markdown("""
-    <div class="main-header">
-      <h1>商品驗證登錄證書 &amp; 能效分級標示 查詢系統</h1>
-    </div>
-    """, unsafe_allow_html=True)
+    from pages_impl._shared import render_page_header
+    render_page_header("07")
 
     col_left, col_right = st.columns([1.15, 1])
 
