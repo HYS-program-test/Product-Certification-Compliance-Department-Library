@@ -133,6 +133,14 @@ def inject_shared_css():
       .stApp { background-color: #F4F6F7; }
       [data-testid="stVerticalBlockBorderWrapper"] { gap: .5rem !important; }
       div[data-testid="stVerticalBlock"] { gap: .5rem !important; }
+      /* 同一排的 st.columns() 強制不換行，避免內容較寬的欄位把整欄擠到下一行 */
+      div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+      }
+      div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+      div[data-testid="stHorizontalBlock"] > div.stColumn {
+        min-width: 0 !important;
+      }
 
       div[data-testid="stButton"] button {
         border-radius: 8px !important; transition: background .12s, color .12s;
