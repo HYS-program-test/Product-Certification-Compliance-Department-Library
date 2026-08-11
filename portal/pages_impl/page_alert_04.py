@@ -31,10 +31,10 @@ def render():
         ("資料品質異常筆數", quality_issue),
     ])
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
     col_a, col_b = st.columns(2)
 
-    with col_a:
+    with col_a, st.container(key="chart_card_04_a"):
         st.markdown('<div class="block-card-title">A　90天內即將到期</div>', unsafe_allow_html=True)
         rows = []
         due = df[(df["商品驗證風險狀態"] == "90天內") | (df["節能標章風險狀態"] == "90天內")]
@@ -49,16 +49,16 @@ def render():
                              "剩餘天數": int(r["節能標章剩餘天數"])})
         due_df = pd.DataFrame(rows).sort_values("剩餘天數") if rows else pd.DataFrame(
             columns=["證書類型", "證書編號", "類別", "型號", "有效日期", "剩餘天數"])
-        st.dataframe(due_df, use_container_width=True, hide_index=True, height=260)
+        st.dataframe(due_df, use_container_width=True, hide_index=True, height=195)
 
-    with col_b:
+    with col_b, st.container(key="chart_card_04_b"):
         st.markdown('<div class="block-card-title">B　標章覆蓋缺口</div>', unsafe_allow_html=True)
         gap = df[df["標章覆蓋狀態"] != "標章有效"][
             ["類別", "室外機型號", "標章覆蓋狀態", "商品驗證有效期限", "節能標章有效日期"]]
-        st.dataframe(gap, use_container_width=True, hide_index=True, height=260)
+        st.dataframe(gap, use_container_width=True, hide_index=True, height=195)
 
     col_c, col_d = st.columns(2)
-    with col_c:
+    with col_c, st.container(key="chart_card_04_c"):
         st.markdown('<div class="block-card-title">C　CSPF 低於標示值</div>', unsafe_allow_html=True)
         low = df[df["CSPF低於標示"]].copy()
         low["CSPF實測標示比"] = (low["CSPF實測標示比_num"] * 100).round(1).astype(str) + "%"
@@ -67,9 +67,9 @@ def render():
             use_container_width=True, hide_index=True, height=260,
         )
 
-    with col_d:
+    with col_d, st.container(key="chart_card_04_d"):
         st.markdown('<div class="block-card-title">D　資料品質異常</div>', unsafe_allow_html=True)
         bad = df[df["資料品質異常"]][["類別", "室外機型號", "登錄編號", "能源效率分級", "資料品質異常原因"]]
-        st.dataframe(bad, use_container_width=True, hide_index=True, height=260)
+        st.dataframe(bad, use_container_width=True, hide_index=True, height=195)
 
     st.info("這一頁目前是照 PBI 邏輯獨立算出來的版本。跟 08（生命週期審核）到期清單串接、把 A 區塊換成 08 那套帶展延決策互動功能的版本，還沒做，是下一步。")

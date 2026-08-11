@@ -129,72 +129,108 @@ def inject_shared_css():
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
-      .block-container { padding-top: 1rem !important; padding-left: .6rem !important; margin-top: 0 !important; max-width: 100% !important; }
-      .stApp { background-color: #F7F8F9; }
+      .block-container { padding-top: .7rem !important; padding-left: .6rem !important; padding-bottom: .7rem !important; margin-top: 0 !important; max-width: 100% !important; }
+      .stApp { background-color: #F4F6F7; }
+      [data-testid="stVerticalBlockBorderWrapper"] { gap: .5rem !important; }
+      div[data-testid="stVerticalBlock"] { gap: .5rem !important; }
 
       div[data-testid="stButton"] button {
-        border-radius: 8px !important;
+        border-radius: 8px !important; transition: background .12s, color .12s;
       }
-      /* 左側導覽欄：灰底、直排頁籤按鈕，貼齊左邊 */
+
+      /* 左側導覽欄：灰底、直排頁籤按鈕，貼齊左邊，壓縮高度 */
       .st-key-nav_col {
-        background: #E9ECEF; border-radius: 10px; padding: .9rem .5rem;
-        height: 100%;
+        background: #EBEEF0; border-radius: 10px; padding: .55rem .45rem;
+        height: 100%; box-shadow: inset 0 0 0 1px rgba(22,50,79,.05);
       }
-      .st-key-nav_col [data-testid="stVerticalBlock"] { gap: 6px !important; }
+      .st-key-nav_col [data-testid="stVerticalBlock"] { gap: 3px !important; }
       .st-key-nav_col div[data-testid="stButton"] button {
-        background: transparent !important; color: #4A5A63 !important;
-        border: 1px solid transparent !important; font-weight: 600 !important;
-        font-size: .82rem !important; padding: .5rem .5rem !important;
+        background: transparent !important; color: #57666E !important;
+        border: 1px solid transparent !important; border-left: 3px solid transparent !important;
+        border-radius: 6px !important; font-weight: 600 !important;
+        font-size: .78rem !important; padding: .35rem .45rem !important; min-height: 0 !important;
         text-align: left !important; white-space: nowrap !important;
         overflow: hidden !important; text-overflow: ellipsis !important;
+        line-height: 1.5 !important;
       }
       .st-key-nav_col div[data-testid="stButton"] button:hover {
-        background: rgba(22,50,79,.08) !important; color: #16324F !important;
+        background: rgba(22,50,79,.07) !important; color: #16324F !important;
       }
       .st-key-nav_col div[data-testid="stButton"] button[kind="primary"] {
-        background: #3A7CA5 !important; color: #fff !important;
+        background: #FFFFFF !important; color: #205072 !important;
+        border-left: 3px solid #3A7CA5 !important;
+        box-shadow: 0 1px 2px rgba(22,50,79,.10) !important; font-weight: 700 !important;
       }
       .nav-user {
-        color: #6B7A82; font-size: .72rem; padding: .4rem;
-        border-top: 1px solid rgba(0,0,0,.08); margin-top: .6rem;
+        color: #7A8890; font-size: .68rem; padding: .3rem .45rem 0;
+        border-top: 1px solid rgba(0,0,0,.08); margin-top: .35rem;
       }
 
-      /* 各分頁統一抬頭 */
+      /* 各分頁統一抬頭：壓縮高度 */
       .page-header {
-        display: flex; align-items: center; gap: 14px;
-        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 12px;
-        padding: 1rem 1.25rem; margin-bottom: 1rem;
+        display: flex; align-items: center; gap: 10px;
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 10px;
+        padding: .5rem .85rem; margin-bottom: .5rem;
+        box-shadow: 0 1px 2px rgba(22,50,79,.05);
       }
       .page-header .ph-icon {
-        width: 42px; height: 42px; min-width: 42px; border-radius: 10px;
+        width: 30px; height: 30px; min-width: 30px; border-radius: 8px;
         background: #EEF2F4; color: #16324F;
-        display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+        display: flex; align-items: center; justify-content: center; font-size: 1rem;
       }
       .page-header .ph-title {
-        font-size: 1.15rem; font-weight: 700; color: #16324F; line-height: 1.3;
+        font-size: .95rem; font-weight: 700; color: #16324F; line-height: 1.25;
       }
       .page-header .ph-sub {
-        font-size: .8rem; color: #8A9AA3; margin-top: 2px;
+        font-size: .68rem; color: #90A0A8; margin-top: 1px;
       }
 
-      /* KPI 卡片 */
+      /* 篩選器：壓縮高度、統一字級 */
+      div[data-testid="stSelectbox"] label p { font-size: .68rem !important; color: #7A8890 !important; margin-bottom: 2px !important; }
+      div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        min-height: 30px !important; font-size: .78rem !important;
+        border-radius: 7px !important; border-color: #DDE3E6 !important;
+      }
+
+      /* KPI 卡片：緊湊 + 頂部色條 + 輕陰影 */
       .kpi-card {
-        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 10px;
-        padding: .7rem .9rem; text-align: center;
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-top: 3px solid #3A7CA5;
+        border-radius: 9px; padding: .4rem .6rem .5rem; text-align: center;
+        box-shadow: 0 1px 2px rgba(22,50,79,.05);
       }
-      .kpi-card .kpi-label { font-size: .72rem; color: #8A9AA3; margin-bottom: 4px; }
-      .kpi-card .kpi-value { font-size: 1.4rem; font-weight: 700; color: #16324F; }
+      .kpi-card .kpi-label { font-size: .64rem; color: #8A9AA3; margin-bottom: 2px; letter-spacing: .02em; }
+      .kpi-card .kpi-value {
+        font-size: 1.15rem; font-weight: 700; color: #16324F;
+        font-variant-numeric: tabular-nums;
+      }
 
-      /* 區塊卡片 */
+      /* 區塊卡片：緊湊 + 輕陰影 + hover 微互動 */
       .block-card-title {
-        font-size: .85rem; font-weight: 700; color: #16324F; margin-bottom: .4rem;
+        font-size: .76rem; font-weight: 700; color: #16324F; margin-bottom: .25rem;
+        letter-spacing: .01em;
+      }
+      div[class*="st-key-chart_card"] {
+        background: #FFFFFF !important; border: 1px solid #E5E9EB !important;
+        border-radius: 9px !important; padding: .55rem .65rem .15rem .65rem !important;
+        margin-bottom: .5rem !important; box-shadow: 0 1px 3px rgba(22,50,79,.05) !important;
+        transition: box-shadow .15s !important;
+      }
+      div[class*="st-key-chart_card"]:hover {
+        box-shadow: 0 3px 10px rgba(22,50,79,.09) !important;
       }
 
-      /* 登入畫面置中：釘在畫面正中央，不受頁面其他內容高度影響 */
+      /* dataframe 邊框柔化，跟卡片風格一致 */
+      div[data-testid="stDataFrame"] { border-radius: 6px; overflow: hidden; }
+
+      /* 登入畫面置中：flexbox 撐滿視窗高度置中，全部加 !important 避免被蓋掉 */
       .st-key-login_wrap {
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 92vw; max-width: 460px; z-index: 10;
+        min-height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-top: -3rem !important;
       }
+      .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
     </style>
     """, unsafe_allow_html=True)
 

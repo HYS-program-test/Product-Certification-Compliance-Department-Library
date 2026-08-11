@@ -49,19 +49,11 @@ def render():
     ])
 
     st.markdown("<br>", unsafe_allow_html=True)
-    show_cols = [
-        "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "商品驗證剩餘天數",
-        "節能標章證書編號", "節能標章有效日期", "節能標章剩餘天數",
-        "能源效率分級", "CSPF_實測", "CSPF_標示", "登錄編號",
-    ]
-    display_df = df[show_cols].rename(columns={
-        "商品驗證證書編號": "商品驗證證書編號_繼承",
-        "商品驗證有效期限": "商品驗證有效期限_繼承",
-        "商品驗證剩餘天數": "商品驗證剩餘天數",
-        "節能標章證書編號": "節能標章證書編號",
-        "節能標章有效日期": "節能標章有效日期",
-        "節能標章剩餘天數": "節能標章剩餘天數",
-        "CSPF_實測": "CSPF_實測",
-        "CSPF_標示": "CSPF_標示",
-    })
-    st.dataframe(display_df, use_container_width=True, hide_index=True, height=560)
+    with st.container(key="chart_card_03_table"):
+        show_cols = [
+            "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "商品驗證剩餘天數",
+            "節能標章證書編號", "節能標章有效日期", "節能標章剩餘天數",
+            "能源效率分級", "CSPF_實測", "CSPF_標示", "登錄編號",
+        ]
+        display_df = df[show_cols]
+        st.dataframe(display_df, use_container_width=True, hide_index=True, height=560)
