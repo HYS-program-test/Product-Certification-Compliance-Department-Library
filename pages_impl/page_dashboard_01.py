@@ -6,12 +6,11 @@ from pages_impl._shared import render_kpi_row, render_page_header
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 6. 淡色系色彩配置 (馬卡龍 / 低飽和色)
+# 淡色系色彩配置
 COLOR_PASTEL_BLUE = "#60A5FA"      # 淡藍
 COLOR_PASTEL_GREEN = "#34D399"     # 柔綠
-COLOR_PASTEL_ORANGE = "#FDBA74"    # 淡橘 (警示/CSPF <100%)
+COLOR_PASTEL_ORANGE = "#FDBA74"    # 淡橘
 COLOR_PASTEL_PURPLE = "#C084FC"    # 淡紫
-COLOR_PASTEL_BLUE_DARK = "#93C5FD" # 淺天藍
 
 MARGIN = dict(t=35, b=10, l=10, r=10)
 
@@ -28,7 +27,6 @@ def _half_year_bucket(dt):
 
 
 def inject_custom_style():
-    """1. 取消外框 & 7. 調整表格字體大小與標題一致且不粗體"""
     st.markdown(
         """
         <style>
@@ -41,7 +39,7 @@ def inject_custom_style():
             font-weight: 700;
             margin-bottom: 6px;
         }
-        /* 1. 取消 1~6 區塊外框 (border: none, box-shadow: none) */
+        /* 取消 1~6 區塊外框 */
         div[data-testid="stVerticalBlock"] > div:has(div.block-card-title) {
             background-color: #FFFFFF !important;
             border: none !important;
@@ -50,7 +48,7 @@ def inject_custom_style():
             box-shadow: none !important;
         }
         
-        /* 7. 90天內即將到期清單 表格文字樣式 (同標題大小 0.9rem、不粗體) */
+        /* 表格文字樣式 (同標題大小 0.9rem、不粗體) */
         div[data-testid="stDataFrame"] div[data-testid="stTable"] {
             font-size: 0.9rem !important;
             font-weight: 400 !important;
@@ -88,7 +86,7 @@ def render():
             df["節能標章有效日期_dt"], errors="coerce"
         )
 
-    # 4. 計算數量時以證書編號為主，去掉重複計算
+    # 去重統計
     df_cert_unique = df[df["商品驗證有效"]].drop_duplicates("商品驗證證書編號") if "商品驗證證書編號" in df.columns else df[df["商品驗證有效"]]
     df_badge_unique = df[df["標章覆蓋狀態"] == "標章有效"].drop_duplicates("節能標章證書編號") if "節能標章證書編號" in df.columns else df[df["標章覆蓋狀態"] == "標章有效"]
 
@@ -136,7 +134,6 @@ def render():
             '<div class="block-card-title">1 商品驗證登錄證書有效張數</div>',
             unsafe_allow_html=True,
         )
-        # 4. 以證書編號去重後統計各類別張數
         g1 = (
             df_cert_unique.groupby("類別")
             .size()
@@ -179,7 +176,7 @@ def render():
             fig1, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 區塊 2: 節能標章取得百分比 ---
+    # --- 區塊 2: 節能標章取得百分比 (完美等寬 + 標籤文字) ---
     with col2:
         st.markdown(
             '<div class="block-card-title">2 節能標章取得百分比</div>',
@@ -203,12 +200,13 @@ def render():
             rates[cat] = (badge_cnt.get(cat, 0) / tot * 100) if tot > 0 else 0
 
         fig2 = go.Figure()
-        # 2. 調整各圈層厚度為 0.08，hole 放寬至 0.58，確保不擋到中央數字
+
+        # 透過 (R_out^2 - R_in^2) 面積恒定公式計算幾何半徑，確保 4 圈實體視覺寬度完全一致
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "hole": 0.84, "radius": 1.00},
-            {"cat": "VRV", "color": "#90CAF9", "hole": 0.75, "radius": 0.83},
-            {"cat": "SA", "color": "#FFCC80", "hole": 0.66, "radius": 0.74},
-            {"cat": "RA", "color": "#C5E1A5", "hole": 0.58, "radius": 0.65},
+            {"cat": "MA", "color": "#E1BEE7", "hole": 0.880, "radius": 1.000, "label_y": 0.94},  # 最外圈
+            {"cat": "VRV", "color": "#90CAF9", "hole": 0.742, "radius": 0.860, "label_y": 0.80},
+            {"cat": "SA", "color": "#FFCC80", "hole": 0.583, "radius": 0.720, "label_y": 0.65},
+            {"cat": "RA", "color": "#C5E1A5", "hole": 0.374, "radius": 0.560, "label_y": 0.47},   # 最內圈
         ]
 
         for cfg in ring_cfgs:
@@ -224,7 +222,7 @@ def render():
                     rotation=90,
                     marker=dict(
                         colors=[cfg["color"], "#F1F5F9"],
-                        line=dict(color="#FFFFFF", width=3),
+                        line=dict(color="#FFFFFF", width=2),
                     ),
                     textinfo="none",
                     hoverinfo="label",
@@ -236,11 +234,23 @@ def render():
                 )
             )
 
+            # 在圓環上方加入各顏色代表的設備名稱與數值標籤
+            fig2.add_annotation(
+                x=0.5,
+                y=cfg["label_y"],
+                text=f"<b>{c_name}</b>: {val:.1f}%",
+                font=dict(size=9, color="#475569"),
+                showarrow=False,
+                bgcolor="rgba(255,255,255,0.7)",
+                borderpad=1
+            )
+
+        # 中央顯示總體數字
         fig2.add_annotation(
             text=f"<b>{coverage_rate_num:.0f}%</b>",
             x=0.5,
             y=0.5,
-            font=dict(size=28, color="#1E293B"),
+            font=dict(size=26, color="#1E293B"),
             showarrow=False,
         )
         fig2.update_layout(
@@ -253,71 +263,59 @@ def render():
             fig2, use_container_width=True, config={"displayModeBar": False}
         )
 
-    # --- 5. 修正標題: 3 各類別能效分級數量統計 ---
+    # --- 區塊 3: 各類別能效分級數量統計 (換成標準甜甜圈圖 + 中央大數字) ---
     with col3:
         st.markdown(
             '<div class="block-card-title">3 各類別能效分級數量統計</div>',
             unsafe_allow_html=True,
         )
-        # 4. 以證書編號去重後統計
         sub_eff = df[df["標章覆蓋狀態"] == "標章有效"]
         if "節能標章證書編號" in sub_eff.columns:
             sub_eff = sub_eff.drop_duplicates("節能標章證書編號")
-            
-        # 3. 統計各類別與所有能效分級 (不限1級)
-        cat_grade_df = sub_eff.groupby(["類別", "能源效率分級"]).size().reset_index(name="張數")
-        
-        ids, labels, parents, values = [], [], [], []
-        total_badge_certs = sub_eff.shape[0]
 
-        for cat in CATEGORY_ORDER:
-            c_tot = cat_grade_df[cat_grade_df["類別"] == cat]["張數"].sum()
-            if c_tot > 0:
-                ids.append(cat)
-                labels.append(cat)
-                parents.append("")
-                values.append(c_tot)
-        
-        for _, r in cat_grade_df.iterrows():
-            cat = r["類別"]
-            grade = str(r["能源效率分級"]).strip()
-            cnt = r["張數"]
-            if grade != "" and cnt > 0:
-                ids.append(f"{cat}_{grade}")
-                labels.append(f"{grade}級: {cnt}張")
-                parents.append(cat)
-                values.append(cnt)
+        # 統計各類別的有效張數
+        g3 = (
+            sub_eff.groupby("類別")
+            .size()
+            .reindex(CATEGORY_ORDER, fill_value=0)
+        )
+        total_badge_certs = g3.sum()
 
-        # 3. 中間留白 Sunburst 圖形
-        fig3_sun = go.Figure(
-            go.Sunburst(
-                ids=ids,
-                labels=labels,
-                parents=parents,
-                values=values,
-                branchvalues="total",
-                insidetextorientation="horizontal",
-                marker=dict(
-                    colorscale="Blues",
-                    line=dict(color="#FFFFFF", width=2)
+        labels3 = [f"{k}: {v}張" for k, v in g3.items()]
+        fig3 = go.Figure(
+            data=[
+                go.Pie(
+                    labels=labels3,
+                    values=g3.values,
+                    hole=0.72,
+                    textinfo="label",
+                    textposition="inside",
+                    insidetextorientation="horizontal",
+                    marker=dict(
+                        colors=["#A7F3D0", "#93C5FD", "#FDE68A", "#DDD6FE"],
+                        line=dict(color="#FFFFFF", width=3),
+                    ),
+                    showlegend=False,
+                    sort=False,
                 )
-            )
+            ]
         )
-        # 3. 在中央放置總張數標示
-        fig3_sun.add_annotation(
-            text=f"<b>{total_badge_certs}</b> <span style='font-size:12px;'>張</span>",
-            x=0.5, y=0.5,
-            font=dict(size=18, color="#1E293B"),
-            showarrow=False
+        # 中央大數字標示 (同區塊一二)
+        fig3.add_annotation(
+            text=f"<b>{total_badge_certs}</b> <span style='font-size:16px;'>張</span>",
+            x=0.5,
+            y=0.5,
+            font=dict(size=32, color="#1E293B"),
+            showarrow=False,
         )
-        fig3_sun.update_layout(
+        fig3.update_layout(
             height=220,
             margin=dict(t=10, b=10, l=10, r=10),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(
-            fig3_sun, use_container_width=True, config={"displayModeBar": False}
+            fig3, use_container_width=True, config={"displayModeBar": False}
         )
 
     st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
@@ -327,14 +325,13 @@ def render():
     # ==================================================================
     col4, col5, col6 = st.columns(3)
 
-    # --- 5. 修正標題: 4 後續半年到期張數統計 ---
+    # --- 區塊 4: 後續半年到期張數統計 ---
     with col4:
         st.markdown(
             '<div class="block-card-title">4 後續半年到期張數統計</div>',
             unsafe_allow_html=True,
         )
         today = pd.Timestamp.now().normalize()
-        # 4. 去重後計算到期統計
         cert_future = df_cert_unique[df_cert_unique["商品驗證有效期限_dt"] >= today].copy()
         badge_future = df_badge_unique[df_badge_unique["節能標章有效日期_dt"] >= today].copy()
 
@@ -349,7 +346,6 @@ def render():
         c2 = badge_future.groupby("區間").size().reindex(buckets, fill_value=0)
 
         fig4 = go.Figure()
-        # 6. 淡化長條圖顏色 (COLOR_PASTEL_BLUE, COLOR_PASTEL_GREEN)
         fig4.add_bar(
             name="商品驗證到期",
             x=buckets,
@@ -402,7 +398,6 @@ def render():
         )
 
         order = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
-        # 6. 淡化橫向長條圖顏色
         colors5 = {
             "<100%": COLOR_PASTEL_ORANGE,
             "100-102.9%": COLOR_PASTEL_BLUE,
