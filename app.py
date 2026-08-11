@@ -189,10 +189,21 @@ def inject_shared_css():
       .block-card-title {
         font-size: .85rem; font-weight: 700; color: #16324F; margin-bottom: .4rem;
       }
+      div[class*="st-key-chart_card"] {
+        background: #FFFFFF !important; border: 1px solid #E5E9EB !important;
+        border-radius: 10px !important; padding: .9rem 1rem .3rem 1rem !important;
+        margin-bottom: 1rem !important;
+      }
 
-      /* 登入畫面垂直置中 */
-      .st-key-login_wrap { display: flex; align-items: center; justify-content: center; min-height: 82vh; }
-      .st-key-login_wrap > div { width: 100%; }
+      /* 登入畫面置中：flexbox 撐滿視窗高度置中，全部加 !important 避免被蓋掉 */
+      .st-key-login_wrap {
+        min-height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-top: -3rem !important;
+      }
+      .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -204,8 +215,7 @@ def render_login():
     inject_shared_css()
 
     with st.container(key="login_wrap"):
-        _, col, _ = st.columns([1, 1.2, 1])
-        with col:
+        if True:
             step = st.session_state["login_step"]
             error_msg = st.session_state.get("login_error")
 
