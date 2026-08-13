@@ -109,15 +109,12 @@ def render():
                 labels=[f"{c_name}: {val:.1f}%", ""],
                 hole=cfg["hole"], sort=False, direction="clockwise", rotation=90,
                 marker=dict(colors=[cfg["color"], "#F1F5F9"], line=dict(color="#FFFFFF", width=1.5)),
-                textinfo="none", hoverinfo="label",
+                textinfo="label", textposition="inside", insidetextorientation="horizontal",
+                textfont=dict(size=9, color="#1E293B"),
+                hoverinfo="label",
                 domain=dict(x=[0.5 - r_out / 2, 0.5 + r_out / 2], y=[0.5 - r_out / 2, 0.5 + r_out / 2]),
                 showlegend=False,
             ))
-            fig2.add_annotation(
-                x=0.5, y=cfg["label_y"], text=f"<b>{c_name}</b>: {val:.1f}%",
-                font=dict(size=8.5, color="#1E293B"), showarrow=False,
-                bgcolor="rgba(0,0,0,0)", borderpad=1,
-            )
         fig2.add_annotation(text=f"<b>{coverage_rate_num:.0f}%</b>", x=0.5, y=0.5,
                              font=dict(size=24, color="#1E293B"), showarrow=False)
         fig2.update_layout(height=DONUT_H, margin=dict(t=10, b=10, l=10, r=10),
