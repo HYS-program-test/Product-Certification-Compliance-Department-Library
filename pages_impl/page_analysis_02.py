@@ -18,10 +18,10 @@ COLOR_NEUTRAL  = "#64748B"  # 石板灰 (長期天數/遠期)
 # 區塊 A：證書有效期限（商品驗證，不含已到期）
 RISK_ORDER_A = ["90天內", "91-180天", "181-365天", "366天以上"]
 RISK_COLORS_A = {
-    "90天內": COLOR_CRITICAL,
-    "91-180天": COLOR_WARNING,
-    "181-365天": COLOR_PRIMARY,
-    "366天以上": COLOR_NEUTRAL
+    "90天內": COLOR_CRITICAL,    # 珊瑚紅 (#EF4444)
+    "91-180天": COLOR_WARNING,    # 琥珀黃 (#F59E0B)
+    "181-365天": COLOR_PRIMARY,   # 皇家藍 (#2563EB)
+    "366天以上": "#334155"        # 深石板灰藍（可依需求替換為其他特定顏色）
 }
 
 # 區塊 B：節能標章覆蓋缺口（不列「未取得標章」）
