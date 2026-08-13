@@ -92,6 +92,11 @@ def load_full_table() -> pd.DataFrame:
         df = pd.DataFrame(data, columns=COL_NAMES)
         df = df[df["室外機型號"].astype(str).str.strip() != ""].reset_index(drop=True)
 
+        # ── 補值：商品驗證證書編號／有效期限在 Google Sheets 上是合併儲存格，
+        # 逐列讀取時同一張證書底下的型號會讀到空白，往下用最近一個非空白值補齊 ──
+        for col in ["商品驗證證書編號", "商品驗證有效期限"]:
+            df[col] = df[col].replace("", pd.NA).ffill().fillna("")
+
         today = pd.Timestamp(datetime.now().date())
 
         # ── 商品驗證證書 ──

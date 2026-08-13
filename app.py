@@ -124,7 +124,7 @@ def inject_shared_css():
     st.markdown("""
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
-      html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
+      html, body, [class*="css"] { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }
       #MainMenu, footer, header,
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
