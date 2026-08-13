@@ -119,6 +119,7 @@ def render():
     col4, col5, col6 = st.columns(3)
     with col4, st.container(key="chart_card_02_d"):
         st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:34px"></div>', unsafe_allow_html=True)
         bad = df[df["資料品質異常"]][["類別", "室外機型號", "登錄編號", "能源效率分級", "資料品質異常原因"]]
         st.dataframe(bad, use_container_width=True, hide_index=True, height=BLOCK_H)
 
