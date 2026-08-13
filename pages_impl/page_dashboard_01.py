@@ -96,9 +96,9 @@ def render():
         fig2 = go.Figure()
         ring_cfgs = [
             {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
-            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.17},
-            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.30},
-            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.43},
+            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.13},
+            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.22},
+            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.31},
         ]
         for cfg in ring_cfgs:
             c_name = cfg["cat"]
@@ -109,15 +109,12 @@ def render():
                 labels=[f"{c_name}: {val:.1f}%", ""],
                 hole=cfg["hole"], sort=False, direction="clockwise", rotation=90,
                 marker=dict(colors=[cfg["color"], "#F1F5F9"], line=dict(color="#FFFFFF", width=1.5)),
-                textinfo="none", hoverinfo="label",
+                textinfo="label", textposition="inside", insidetextorientation="horizontal",
+                textfont=dict(size=9, color="#1E293B"),
+                hoverinfo="label",
                 domain=dict(x=[0.5 - r_out / 2, 0.5 + r_out / 2], y=[0.5 - r_out / 2, 0.5 + r_out / 2]),
                 showlegend=False,
             ))
-            fig2.add_annotation(
-                x=0.5, y=cfg["label_y"], text=f"<b>{c_name}</b>: {val:.1f}%",
-                font=dict(size=8.5, color="#334155"), showarrow=False,
-                bgcolor="rgba(255,255,255,0.85)", borderpad=1,
-            )
         fig2.add_annotation(text=f"<b>{coverage_rate_num:.0f}%</b>", x=0.5, y=0.5,
                              font=dict(size=24, color="#1E293B"), showarrow=False)
         fig2.update_layout(height=DONUT_H, margin=dict(t=10, b=10, l=10, r=10),
