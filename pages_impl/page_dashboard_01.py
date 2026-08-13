@@ -31,8 +31,8 @@ def render():
     due_90 = int(
         ((df["商品驗證風險狀態"] == "90天內") | (df["節能標章風險狀態"] == "90天內")).sum()
     )
-    valid_models = int(df["室外機型號"].nunique())
-    badge_models = int(df.loc[df["標章覆蓋狀態"] == "標章有效", "室外機型號"].nunique())
+    valid_models = int(df.loc[df["商品驗證現行有效"], "室外機型號"].nunique())
+    badge_models = int(df.loc[df["商品驗證現行有效"] & df["有節能標章"], "室外機型號"].nunique())
     coverage_rate_num = (badge_models / valid_models * 100) if valid_models else 0
     coverage_rate = f"{coverage_rate_num:.1f}%" if valid_models else "—"
 
