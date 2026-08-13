@@ -185,6 +185,8 @@ def load_full_table() -> pd.DataFrame:
                 reasons.append("缺登錄編號")
             if str(row["能源效率分級"]).strip() == "":
                 reasons.append("缺能效分級")
+            if str(row["安規測試報告編號"]).strip() == "":
+                reasons.append("缺安規測試報告編號")
             if not row["商品驗證有效"] and not row["有節能標章"]:
                 reasons.append("未配對室內機")
             if not row["商品驗證有效"]:

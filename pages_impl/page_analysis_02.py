@@ -7,14 +7,14 @@ from pages_impl._data import load_full_table, render_filter_bar
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 莫蘭迪色系
-MORANDI_TERRACOTTA = "#BC8F7A"
-MORANDI_OCHRE = "#D4B483"
-MORANDI_BLUE = "#8DA9C4"
-MORANDI_SAGE = "#9CAF88"
-MORANDI_MAUVE = "#A695A8"
-MORANDI_DEEPSAGE = "#6B8E7F"
-MORANDI_TEAL = "#7FA8A0"
+# 莫蘭迪色系（提高飽和度版本，同一張圖內色系彼此明顯區隔）
+MORANDI_TERRACOTTA = "#C97B5C"
+MORANDI_OCHRE = "#D4A017"
+MORANDI_BLUE = "#4A7A9C"
+MORANDI_SAGE = "#6B9080"
+MORANDI_MAUVE = "#8A6B87"
+MORANDI_DEEPSAGE = "#4F7C6B"
+MORANDI_TEAL = "#5C9A8C"
 
 # 區塊 A：證書有效期限（商品驗證，不含已到期）
 RISK_ORDER_A = ["90天內", "91-180天", "181-365天", "366天以上"]
