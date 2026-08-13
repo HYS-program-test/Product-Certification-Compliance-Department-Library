@@ -98,6 +98,11 @@ def load_full_table() -> pd.DataFrame:
         df["商品驗證有效期限_dt"] = pd.to_datetime(df["商品驗證有效期限"], errors="coerce")
         df["商品驗證剩餘天數"] = (df["商品驗證有效期限_dt"] - today).dt.days
         df["商品驗證有效"] = df["商品驗證證書編號"].astype(str).str.strip() != ""
+        df["商品驗證現行有效"] = (
+            df["商品驗證有效"]
+            & df["商品驗證剩餘天數"].notna()
+            & (df["商品驗證剩餘天數"] >= 0)
+        )
 
         def cert_risk(days, has_cert):
             if not has_cert or pd.isna(days):

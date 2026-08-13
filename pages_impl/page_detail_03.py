@@ -32,8 +32,8 @@ def render():
 
     total_rows = len(df)
     valid_models = int(df["室外機型號"].nunique())
-    cert_valid = int(df["商品驗證有效"].sum())
-    badge_valid = int((df["標章覆蓋狀態"] == "標章有效").sum())
+    cert_valid = int(df[df["商品驗證現行有效"]].drop_duplicates("商品驗證證書編號").shape[0])
+    badge_valid = int(df[df["標章覆蓋狀態"] == "標章有效"].drop_duplicates("節能標章證書編號").shape[0])
     badge_models = int(df.loc[df["標章覆蓋狀態"] == "標章有效", "室外機型號"].nunique())
     coverage_rate = f"{badge_models / valid_models * 100:.1f}%" if valid_models else "—"
     avg_ratio = df["CSPF實測標示比_num"].dropna()

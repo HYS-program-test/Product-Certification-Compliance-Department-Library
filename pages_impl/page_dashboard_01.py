@@ -23,7 +23,7 @@ def render():
     df = render_filter_bar(df_all, key_prefix="p01")
 
     # ── 去重後的證書表：一張證書（同一個證書編號）只算一次，符合「張數」的字面意義 ──
-    df_cert_unique = df[df["商品驗證有效"]].drop_duplicates("商品驗證證書編號")
+    df_cert_unique = df[df["商品驗證現行有效"]].drop_duplicates("商品驗證證書編號")
     df_badge_unique = df[df["標章覆蓋狀態"] == "標章有效"].drop_duplicates("節能標章證書編號")
 
     cert_valid = len(df_cert_unique)
@@ -95,10 +95,10 @@ def render():
 
         fig2 = go.Figure()
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.96},
-            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.83},
-            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.70},
-            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.57},
+            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
+            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.17},
+            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.30},
+            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.43},
         ]
         for cfg in ring_cfgs:
             c_name = cfg["cat"]
