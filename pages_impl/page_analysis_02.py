@@ -116,7 +116,6 @@ def render():
         st.markdown('<div class="block-card-title">C　CSPF 實測/標示</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "CSPF風險區間", CSPF_ORDER, CSPF_COLORS)
 
-    st.markdown('<div style="height:3rem"></div>', unsafe_allow_html=True)
     col4, col5, col6 = st.columns(3)
     with col4, st.container(key="chart_card_02_d"):
         st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
@@ -136,7 +135,7 @@ def render():
             fig.add_bar(name=f"{grade}級", x=CATEGORY_ORDER, y=vals,
                         marker_color=grade_colors.get(str(grade), COLOR_BLUE),
                         text=vals, textposition="outside")
-        fig.update_layout(barmode="group", height=BLOCK_H, margin=dict(t=20, b=6, l=6, r=6),
+        fig.update_layout(barmode="group", height=BLOCK_H, margin=dict(t=48, b=6, l=6, r=6),
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
                            plot_bgcolor="white", paper_bgcolor="white",
                            yaxis=dict(showgrid=True, gridcolor="#F1F5F9"))
@@ -155,10 +154,8 @@ def render():
         fig = go.Figure()
         fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=COLOR_BLUE)
         fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=COLOR_DEEPTEAL)
-        fig.update_layout(barmode="group", height=BLOCK_H, margin=MARGIN,
+        fig.update_layout(barmode="group", height=BLOCK_H, margin=dict(t=48, b=6, l=6, r=6),
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
                            plot_bgcolor="white", paper_bgcolor="white",
                            yaxis=dict(showgrid=True, gridcolor="#F1F5F9"))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-    st.markdown('<div style="height:3rem"></div>', unsafe_allow_html=True)
