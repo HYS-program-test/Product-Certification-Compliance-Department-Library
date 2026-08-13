@@ -160,3 +160,5 @@ def render():
                            plot_bgcolor="white", paper_bgcolor="white",
                            yaxis=dict(showgrid=True, gridcolor="#F1F5F9"))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
