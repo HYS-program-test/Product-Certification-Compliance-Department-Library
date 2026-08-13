@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pages_impl._shared import render_page_header, render_kpi_row
-from pages_impl._data import load_full_table, render_filter_bar
+from pages_impl._data import load_full_table
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
@@ -28,7 +28,7 @@ CSPF_ORDER = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
 CSPF_COLORS = {"<100%": COLOR_CORAL, "100-102.9%": COLOR_BLUE, "103-105.9%": COLOR_TEAL, "≥106%": COLOR_PURPLE}
 
 MARGIN = dict(t=6, b=6, l=6, r=6)
-BLOCK_H = 145  # 同 01 頁六格塞一屏的壓縮高度
+BLOCK_H = 185  # 拿掉篩選器空出空間，六格拉高一點
 
 
 def _cert_bucket_a(days):
@@ -61,8 +61,8 @@ def _stacked_bar_card(df, value_col, order, colors, height=BLOCK_H):
             continue
         fig.add_bar(name=bucket, y=CATEGORY_ORDER, x=pivot[bucket].values,
                     orientation="h", marker_color=colors[bucket])
-    fig.update_layout(barmode="stack", height=height, margin=MARGIN,
-                       legend=dict(orientation="h", y=1.22, x=0, font=dict(size=9)),
+    fig.update_layout(barmode="stack", height=height, margin=dict(t=48, b=6, l=6, r=6),
+                       legend=dict(orientation="h", y=1.28, x=0, font=dict(size=9)),
                        plot_bgcolor="white", paper_bgcolor="white")
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
@@ -83,7 +83,7 @@ def render():
         st.warning("目前讀不到資料，請確認 Secrets 設定（gcp_service_account）是否正確。")
         return
 
-    df = render_filter_bar(df_all, key_prefix="p02")
+    df = df_all
 
     cert_due180 = int((df["商品驗證風險狀態"].isin(["90天內", "91-180天"])).sum())
     badge_due180 = int((df["節能標章風險狀態"].isin(["90天內", "91-180天"])).sum())
