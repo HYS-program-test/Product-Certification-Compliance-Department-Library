@@ -7,37 +7,37 @@ from pages_impl._data import load_full_table, render_filter_bar
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 莫蘭迪色系（高彩度無綠版本：磚紅、芥黃、丹寧藍、煙紫、深靛藍、石板藍灰）
-MORANDI_TERRACOTTA = "#D95D39"  # 高彩磚紅（高風險/低於標示）
-MORANDI_OCHRE      = "#E09F3E"  # 高彩芥黃（中風險/提醒/2級）
-MORANDI_BLUE       = "#3B7A9E"  # 高彩丹寧藍（低風險/標章/一般）
-MORANDI_MAUVE      = "#8E5285"  # 高彩煙紫（優良/3級）
-MORANDI_NAVY       = "#2C5282"  # 深靛藍（1級/核心項目）
-MORANDI_SLATE      = "#5A738E"  # 石板藍灰（長遠天數/安全）
+# 現代高對比度商務配色（高清晰度、極致對比）
+COLOR_CRITICAL = "#EF4444"  # 珊瑚紅 (緊急/高風險/<100%)
+COLOR_WARNING  = "#F59E0B"  # 琥珀黃 (警告/中風險/快到期)
+COLOR_PRIMARY  = "#2563EB"  # 皇家藍 (主項目/正常/商品驗證)
+COLOR_SECONDARY= "#0EA5E9"  # 天空藍 (次要/節能標章)
+COLOR_ACCENT   = "#8B5CF6"  # 亮紫 (優良/高標/≥106%)
+COLOR_NEUTRAL  = "#64748B"  # 石板灰 (長期天數/遠期)
 
 # 區塊 A：證書有效期限（商品驗證，不含已到期）
 RISK_ORDER_A = ["90天內", "91-180天", "181-365天", "366天以上"]
 RISK_COLORS_A = {
-    "90天內": MORANDI_TERRACOTTA,
-    "91-180天": MORANDI_OCHRE,
-    "181-365天": MORANDI_BLUE,
-    "366天以上": MORANDI_SLATE
+    "90天內": COLOR_CRITICAL,
+    "91-180天": COLOR_WARNING,
+    "181-365天": COLOR_PRIMARY,
+    "366天以上": COLOR_NEUTRAL
 }
 
 # 區塊 B：節能標章覆蓋缺口（不列「未取得標章」）
 BADGE_ORDER_B = ["標章快到期", "標章有效"]
 BADGE_COLORS_B = {
-    "標章快到期": MORANDI_OCHRE,
-    "標章有效": MORANDI_BLUE
+    "標章快到期": COLOR_WARNING,
+    "標章有效": COLOR_PRIMARY
 }
 
 # 區塊 C：CSPF 實測/標示
 CSPF_ORDER = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
 CSPF_COLORS = {
-    "<100%": MORANDI_TERRACOTTA,
-    "100-102.9%": MORANDI_BLUE,
-    "103-105.9%": MORANDI_SLATE,
-    "≥106%": MORANDI_MAUVE
+    "<100%": COLOR_CRITICAL,
+    "100-102.9%": COLOR_PRIMARY,
+    "103-105.9%": COLOR_SECONDARY,
+    "≥106%": COLOR_ACCENT
 }
 
 MARGIN = dict(t=6, b=6, l=6, r=6)
@@ -141,14 +141,14 @@ def render():
         sub = df[df["能源效率分級"].astype(str).str.strip() != ""]
         pivot = sub.groupby(["類別", "能源效率分級"]).size().unstack(fill_value=0).reindex(CATEGORY_ORDER, fill_value=0)
         fig = go.Figure()
-        # 1級使用深靛藍、2級使用芥黃、3級使用煙紫
-        grade_colors = {"1": MORANDI_NAVY, "2": MORANDI_OCHRE, "3": MORANDI_MAUVE}
+        # 1級使用皇家藍、2級使用琥珀黃、3級使用亮紫
+        grade_colors = {"1": COLOR_PRIMARY, "2": COLOR_WARNING, "3": COLOR_ACCENT}
         for grade in sorted(pivot.columns):
             if str(grade).strip() == "":
                 continue
             vals = pivot[grade].values
             fig.add_bar(name=f"{grade}級", x=CATEGORY_ORDER, y=vals,
-                        marker_color=grade_colors.get(str(grade), MORANDI_BLUE),
+                        marker_color=grade_colors.get(str(grade), COLOR_NEUTRAL),
                         text=vals, textposition="outside")
         fig.update_layout(barmode="group", height=BLOCK_H, margin=dict(t=20, b=6, l=6, r=6),
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
@@ -167,9 +167,8 @@ def render():
         c1 = cert_future.groupby("區間").size().reindex(buckets, fill_value=0)
         c2 = badge_future.groupby("區間").size().reindex(buckets, fill_value=0)
         fig = go.Figure()
-        # 原 Teal 改為 MORANDI_MAUVE（煙紫），使兩者對比鮮明且無綠色
-        fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=MORANDI_BLUE)
-        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=MORANDI_MAUVE)
+        fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=COLOR_PRIMARY)
+        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=COLOR_SECONDARY)
         fig.update_layout(barmode="group", height=BLOCK_H, margin=MARGIN,
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
                            plot_bgcolor="white", paper_bgcolor="white",
