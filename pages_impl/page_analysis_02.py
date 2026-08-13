@@ -7,38 +7,25 @@ from pages_impl._data import load_full_table, render_filter_bar
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 現代高對比度商務配色（高清晰度、極致對比）
-COLOR_CRITICAL = "#EF4444"  # 珊瑚紅 (緊急/高風險/<100%)
-COLOR_WARNING  = "#F59E0B"  # 琥珀黃 (警告/中風險/快到期)
-COLOR_PRIMARY  = "#2563EB"  # 皇家藍 (主項目/正常/商品驗證)
-COLOR_SECONDARY= "#0EA5E9"  # 天空藍 (次要/節能標章)
-COLOR_ACCENT   = "#8B5CF6"  # 亮紫 (優良/高標/≥106%)
-COLOR_NEUTRAL  = "#64748B"  # 石板灰 (長期天數/遠期)
+# 色彩配置：清楚飽和、避免同張圖撞色系
+COLOR_CORAL = "#E8735C"
+COLOR_AMBER = "#E9A23B"
+COLOR_BLUE = "#3B82C4"
+COLOR_TEAL = "#2A9D8F"
+COLOR_PURPLE = "#7C6BA8"
+COLOR_DEEPTEAL = "#1B6B65"
 
 # 區塊 A：證書有效期限（商品驗證，不含已到期）
 RISK_ORDER_A = ["90天內", "91-180天", "181-365天", "366天以上"]
-RISK_COLORS_A = {
-    "90天內": COLOR_CRITICAL,    # 珊瑚紅 (#EF4444)
-    "91-180天": COLOR_WARNING,    # 琥珀黃 (#F59E0B)
-    "181-365天": COLOR_PRIMARY,   # 皇家藍 (#2563EB)
-    "366天以上": "#334155"        # 深石板灰藍（可依需求替換為其他特定顏色）
-}
+RISK_COLORS_A = {"90天內": COLOR_CORAL, "91-180天": COLOR_AMBER, "181-365天": COLOR_BLUE, "366天以上": COLOR_TEAL}
 
 # 區塊 B：節能標章覆蓋缺口（不列「未取得標章」）
 BADGE_ORDER_B = ["標章快到期", "標章有效"]
-BADGE_COLORS_B = {
-    "標章快到期": COLOR_WARNING,
-    "標章有效": COLOR_PRIMARY
-}
+BADGE_COLORS_B = {"標章快到期": COLOR_AMBER, "標章有效": COLOR_TEAL}
 
 # 區塊 C：CSPF 實測/標示
 CSPF_ORDER = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
-CSPF_COLORS = {
-    "<100%": COLOR_CRITICAL,
-    "100-102.9%": COLOR_PRIMARY,
-    "103-105.9%": COLOR_SECONDARY,
-    "≥106%": COLOR_ACCENT
-}
+CSPF_COLORS = {"<100%": COLOR_CORAL, "100-102.9%": COLOR_BLUE, "103-105.9%": COLOR_TEAL, "≥106%": COLOR_PURPLE}
 
 MARGIN = dict(t=6, b=6, l=6, r=6)
 BLOCK_H = 145  # 同 01 頁六格塞一屏的壓縮高度
@@ -120,35 +107,34 @@ def render():
 
     col1, col2, col3 = st.columns(3)
     with col1, st.container(key="chart_card_02_a"):
-        st.markdown('<div class="block-card-title">A 證書有效期限</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">A　證書有效期限</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "_A風險分級", RISK_ORDER_A, RISK_COLORS_A)
     with col2, st.container(key="chart_card_02_b"):
-        st.markdown('<div class="block-card-title">B 節能標章覆蓋缺口</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">B　節能標章覆蓋缺口</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "_B標章分級", BADGE_ORDER_B, BADGE_COLORS_B)
     with col3, st.container(key="chart_card_02_c"):
-        st.markdown('<div class="block-card-title">C CSPF 實測/標示</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">C　CSPF 實測/標示</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "CSPF風險區間", CSPF_ORDER, CSPF_COLORS)
 
     col4, col5, col6 = st.columns(3)
 
     with col4, st.container(key="chart_card_02_d"):
-        st.markdown('<div class="block-card-title">D 資料品質異常明細</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
         bad = df[df["資料品質異常"]][["類別", "室外機型號", "登錄編號", "能源效率分級", "資料品質異常原因"]]
         st.dataframe(bad, use_container_width=True, hide_index=True, height=BLOCK_H)
 
     with col5, st.container(key="chart_card_02_e"):
-        st.markdown('<div class="block-card-title">E 各類別能效分級數量</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">E　各類別能效分級數量</div>', unsafe_allow_html=True)
         sub = df[df["能源效率分級"].astype(str).str.strip() != ""]
         pivot = sub.groupby(["類別", "能源效率分級"]).size().unstack(fill_value=0).reindex(CATEGORY_ORDER, fill_value=0)
         fig = go.Figure()
-        # 1級使用皇家藍、2級使用琥珀黃、3級使用亮紫
-        grade_colors = {"1": COLOR_PRIMARY, "2": COLOR_WARNING, "3": COLOR_ACCENT}
+        grade_colors = {"1": COLOR_DEEPTEAL, "2": COLOR_AMBER, "3": COLOR_PURPLE}
         for grade in sorted(pivot.columns):
             if str(grade).strip() == "":
                 continue
             vals = pivot[grade].values
             fig.add_bar(name=f"{grade}級", x=CATEGORY_ORDER, y=vals,
-                        marker_color=grade_colors.get(str(grade), COLOR_NEUTRAL),
+                        marker_color=grade_colors.get(str(grade), COLOR_BLUE),
                         text=vals, textposition="outside")
         fig.update_layout(barmode="group", height=BLOCK_H, margin=dict(t=20, b=6, l=6, r=6),
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
@@ -157,7 +143,7 @@ def render():
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with col6, st.container(key="chart_card_02_f"):
-        st.markdown('<div class="block-card-title">F 後續到期張數</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">F　後續到期張數</div>', unsafe_allow_html=True)
         today = pd.Timestamp.now().normalize()
         cert_future = df[(df["商品驗證有效"]) & (df["商品驗證有效期限_dt"] >= today)].copy()
         badge_future = df[(df["有節能標章"]) & (df["節能標章有效日期_dt"] >= today)].copy()
@@ -167,8 +153,8 @@ def render():
         c1 = cert_future.groupby("區間").size().reindex(buckets, fill_value=0)
         c2 = badge_future.groupby("區間").size().reindex(buckets, fill_value=0)
         fig = go.Figure()
-        fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=COLOR_PRIMARY)
-        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=COLOR_SECONDARY)
+        fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=COLOR_BLUE)
+        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=COLOR_DEEPTEAL)
         fig.update_layout(barmode="group", height=BLOCK_H, margin=MARGIN,
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
                            plot_bgcolor="white", paper_bgcolor="white",
