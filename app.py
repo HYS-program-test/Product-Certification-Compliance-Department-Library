@@ -25,7 +25,7 @@ COMPANY_DOMAIN = "hotaidev.com.tw"
 # 分頁定義
 # ─────────────────────────────────────────────
 PAGES = [
-    {"id": "01", "label": "原儀表板",   "group": "dashboard"},
+    {"id": "01", "label": "證書管理",   "group": "dashboard"},
     {"id": "02", "label": "新增分析",   "group": "dashboard"},
     {"id": "03", "label": "明細查詢",   "group": "dashboard"},
     {"id": "04", "label": "管理預警",   "group": "dashboard"},
@@ -130,7 +130,7 @@ def inject_shared_css():
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
       .block-container { padding-top: .7rem !important; padding-left: .6rem !important; padding-bottom: .7rem !important; margin-top: 0 !important; max-width: 100% !important; }
-      .stApp { background-color: #F4F6F7; }
+      .stApp { background-color: #FFFFFF; }
       [data-testid="stVerticalBlockBorderWrapper"] { gap: .5rem !important; }
       div[data-testid="stVerticalBlock"] { gap: .5rem !important; }
       /* 同一排的 st.columns() 強制不換行，避免內容較寬的欄位把整欄擠到下一行 */
@@ -218,13 +218,9 @@ def inject_shared_css():
         letter-spacing: .01em;
       }
       div[class*="st-key-chart_card"] {
-        background: #FFFFFF !important; border: 1px solid #E5E9EB !important;
-        border-radius: 8px !important; padding: .35rem .5rem .05rem .5rem !important;
-        margin-bottom: .35rem !important; box-shadow: 0 1px 3px rgba(22,50,79,.05) !important;
-        transition: box-shadow .15s !important;
-      }
-      div[class*="st-key-chart_card"]:hover {
-        box-shadow: 0 3px 10px rgba(22,50,79,.09) !important;
+        background: #FFFFFF !important; border: none !important;
+        border-radius: 0 !important; padding: .35rem .5rem .05rem .5rem !important;
+        margin-bottom: .35rem !important; box-shadow: none !important;
       }
 
       /* dataframe 邊框柔化，跟卡片風格一致 */
