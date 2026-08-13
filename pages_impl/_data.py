@@ -157,12 +157,10 @@ def load_full_table() -> pd.DataFrame:
             badge_risk(d, h) for d, h in zip(df["節能標章剩餘天數"], df["有節能標章"])
         ]
 
-        # ── CSPF ──
+        # ── CSPF：直接抓 Z 欄（CSPF實測/標示），不再用 X/Y 自行計算 ──
         df["CSPF_實測_num"] = df["CSPF_實測"].apply(_to_float)
         df["CSPF_標示_num"] = df["CSPF_標示"].apply(_to_float)
-        ratio_from_col = df["CSPF實測標示比"].apply(_pct_to_float)
-        ratio_computed = df["CSPF_實測_num"] / df["CSPF_標示_num"]
-        df["CSPF實測標示比_num"] = ratio_from_col.combine_first(ratio_computed)
+        df["CSPF實測標示比_num"] = df["CSPF實測標示比"].apply(_pct_to_float)
 
         def cspf_bucket(ratio):
             if pd.isna(ratio):
@@ -189,6 +187,8 @@ def load_full_table() -> pd.DataFrame:
                 reasons.append("缺能效分級")
             if not row["商品驗證有效"] and not row["有節能標章"]:
                 reasons.append("未配對室內機")
+            if not row["商品驗證有效"]:
+                reasons.append("商品驗證登錄證書資料缺漏")
             return "；".join(reasons)
 
         df["資料品質異常原因"] = df.apply(quality_reasons, axis=1)
