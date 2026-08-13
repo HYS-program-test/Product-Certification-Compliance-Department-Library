@@ -116,7 +116,7 @@ def render():
         st.markdown('<div class="block-card-title">C　CSPF 實測/標示</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "CSPF風險區間", CSPF_ORDER, CSPF_COLORS)
 
-    st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:3rem"></div>', unsafe_allow_html=True)
     col4, col5, col6 = st.columns(3)
     with col4, st.container(key="chart_card_02_d"):
         st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
@@ -161,4 +161,4 @@ def render():
                            yaxis=dict(showgrid=True, gridcolor="#F1F5F9"))
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:3rem"></div>', unsafe_allow_html=True)
