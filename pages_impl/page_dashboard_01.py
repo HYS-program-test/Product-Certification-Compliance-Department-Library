@@ -100,10 +100,10 @@ def render():
 
         fig2 = go.Figure()
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
-            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.13},
-            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.22},
-            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.31},
+            {"cat": "MA", "color": "#A7F3D0", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
+            {"cat": "VRV", "color": "#DDD6FE", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.13},
+            {"cat": "SA", "color": "#FDE68A", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.22},
+            {"cat": "RA", "color": "#93C5FD", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.31},
         ]
         for cfg in ring_cfgs:
             c_name = cfg["cat"]
