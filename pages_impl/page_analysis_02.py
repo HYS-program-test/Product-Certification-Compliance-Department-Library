@@ -7,26 +7,38 @@ from pages_impl._data import load_full_table, render_filter_bar
 
 CATEGORY_ORDER = ["MA", "RA", "SA", "VRV"]
 
-# 莫蘭迪色系（提高飽和度版本，同一張圖內色系彼此明顯區隔）
-MORANDI_TERRACOTTA = "#C97B5C"
-MORANDI_OCHRE = "#D4A017"
-MORANDI_BLUE = "#4A7A9C"
-MORANDI_SAGE = "#6B9080"
-MORANDI_MAUVE = "#8A6B87"
-MORANDI_DEEPSAGE = "#4F7C6B"
-MORANDI_TEAL = "#5C9A8C"
+# 莫蘭迪色系（高彩度無綠版本：磚紅、芥黃、丹寧藍、煙紫、深靛藍、石板藍灰）
+MORANDI_TERRACOTTA = "#D95D39"  # 高彩磚紅（高風險/低於標示）
+MORANDI_OCHRE      = "#E09F3E"  # 高彩芥黃（中風險/提醒/2級）
+MORANDI_BLUE       = "#3B7A9E"  # 高彩丹寧藍（低風險/標章/一般）
+MORANDI_MAUVE      = "#8E5285"  # 高彩煙紫（優良/3級）
+MORANDI_NAVY       = "#2C5282"  # 深靛藍（1級/核心項目）
+MORANDI_SLATE      = "#5A738E"  # 石板藍灰（長遠天數/安全）
 
 # 區塊 A：證書有效期限（商品驗證，不含已到期）
 RISK_ORDER_A = ["90天內", "91-180天", "181-365天", "366天以上"]
-RISK_COLORS_A = {"90天內": MORANDI_TERRACOTTA, "91-180天": MORANDI_OCHRE, "181-365天": MORANDI_BLUE, "366天以上": MORANDI_SAGE}
+RISK_COLORS_A = {
+    "90天內": MORANDI_TERRACOTTA,
+    "91-180天": MORANDI_OCHRE,
+    "181-365天": MORANDI_BLUE,
+    "366天以上": MORANDI_SLATE
+}
 
 # 區塊 B：節能標章覆蓋缺口（不列「未取得標章」）
 BADGE_ORDER_B = ["標章快到期", "標章有效"]
-BADGE_COLORS_B = {"標章快到期": MORANDI_OCHRE, "標章有效": MORANDI_SAGE}
+BADGE_COLORS_B = {
+    "標章快到期": MORANDI_OCHRE,
+    "標章有效": MORANDI_BLUE
+}
 
 # 區塊 C：CSPF 實測/標示
 CSPF_ORDER = ["<100%", "100-102.9%", "103-105.9%", "≥106%"]
-CSPF_COLORS = {"<100%": MORANDI_TERRACOTTA, "100-102.9%": MORANDI_BLUE, "103-105.9%": MORANDI_SAGE, "≥106%": MORANDI_MAUVE}
+CSPF_COLORS = {
+    "<100%": MORANDI_TERRACOTTA,
+    "100-102.9%": MORANDI_BLUE,
+    "103-105.9%": MORANDI_SLATE,
+    "≥106%": MORANDI_MAUVE
+}
 
 MARGIN = dict(t=6, b=6, l=6, r=6)
 BLOCK_H = 145  # 同 01 頁六格塞一屏的壓縮高度
@@ -108,28 +120,29 @@ def render():
 
     col1, col2, col3 = st.columns(3)
     with col1, st.container(key="chart_card_02_a"):
-        st.markdown('<div class="block-card-title">A　證書有效期限</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">A 證書有效期限</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "_A風險分級", RISK_ORDER_A, RISK_COLORS_A)
     with col2, st.container(key="chart_card_02_b"):
-        st.markdown('<div class="block-card-title">B　節能標章覆蓋缺口</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">B 節能標章覆蓋缺口</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "_B標章分級", BADGE_ORDER_B, BADGE_COLORS_B)
     with col3, st.container(key="chart_card_02_c"):
-        st.markdown('<div class="block-card-title">C　CSPF 實測/標示</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">C CSPF 實測/標示</div>', unsafe_allow_html=True)
         _stacked_bar_card(df, "CSPF風險區間", CSPF_ORDER, CSPF_COLORS)
 
     col4, col5, col6 = st.columns(3)
 
     with col4, st.container(key="chart_card_02_d"):
-        st.markdown('<div class="block-card-title">D　資料品質異常明細</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">D 資料品質異常明細</div>', unsafe_allow_html=True)
         bad = df[df["資料品質異常"]][["類別", "室外機型號", "登錄編號", "能源效率分級", "資料品質異常原因"]]
         st.dataframe(bad, use_container_width=True, hide_index=True, height=BLOCK_H)
 
     with col5, st.container(key="chart_card_02_e"):
-        st.markdown('<div class="block-card-title">E　各類別能效分級數量</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">E 各類別能效分級數量</div>', unsafe_allow_html=True)
         sub = df[df["能源效率分級"].astype(str).str.strip() != ""]
         pivot = sub.groupby(["類別", "能源效率分級"]).size().unstack(fill_value=0).reindex(CATEGORY_ORDER, fill_value=0)
         fig = go.Figure()
-        grade_colors = {"1": MORANDI_DEEPSAGE, "2": MORANDI_OCHRE, "3": MORANDI_MAUVE}
+        # 1級使用深靛藍、2級使用芥黃、3級使用煙紫
+        grade_colors = {"1": MORANDI_NAVY, "2": MORANDI_OCHRE, "3": MORANDI_MAUVE}
         for grade in sorted(pivot.columns):
             if str(grade).strip() == "":
                 continue
@@ -144,7 +157,7 @@ def render():
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with col6, st.container(key="chart_card_02_f"):
-        st.markdown('<div class="block-card-title">F　後續到期張數</div>', unsafe_allow_html=True)
+        st.markdown('<div class="block-card-title">F 後續到期張數</div>', unsafe_allow_html=True)
         today = pd.Timestamp.now().normalize()
         cert_future = df[(df["商品驗證有效"]) & (df["商品驗證有效期限_dt"] >= today)].copy()
         badge_future = df[(df["有節能標章"]) & (df["節能標章有效日期_dt"] >= today)].copy()
@@ -154,8 +167,9 @@ def render():
         c1 = cert_future.groupby("區間").size().reindex(buckets, fill_value=0)
         c2 = badge_future.groupby("區間").size().reindex(buckets, fill_value=0)
         fig = go.Figure()
+        # 原 Teal 改為 MORANDI_MAUVE（煙紫），使兩者對比鮮明且無綠色
         fig.add_bar(name="商品驗證", x=buckets, y=c1.values, marker_color=MORANDI_BLUE)
-        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=MORANDI_TEAL)
+        fig.add_bar(name="節能標章", x=buckets, y=c2.values, marker_color=MORANDI_MAUVE)
         fig.update_layout(barmode="group", height=BLOCK_H, margin=MARGIN,
                            legend=dict(orientation="h", y=1.2, x=0, font=dict(size=9)),
                            plot_bgcolor="white", paper_bgcolor="white",
