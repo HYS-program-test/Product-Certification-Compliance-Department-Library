@@ -3,19 +3,25 @@ import pandas as pd
 import json
 import os
 import smtplib
+import boto3
+from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PRODUCTDEPT_SHEET_ID = "1hEt4uxBABBicxIMJuR57lMiigQYF02CQHZfB-Nc6vjo"  # Total Certificate Management
 
 DECISIONS_TAB = "RenewalDecisions"   # 展延/不展延 勾選狀態，跟外部獨立網站共用同一份，達成同步
-PENDING_TAB = "RenewalPending"       # 待展延清單（年費/規費等可手動填的欄位）
-HISTORY_TAB = "RenewalHistory"       # 歷史展延清單（每次送出都累加一份紀錄，不覆蓋）
+PENDING_TAB = "RenewalPending"       # 確定展延清單（年費/規費等可手動填的欄位）
 
 PENDING_COLUMNS = ["室外機型號", "類別", "證書編號", "有效期限", "年費", "規費", "空白1", "空白2"]
-HISTORY_COLUMNS = ["送出時間", "室外機型號", "類別", "證書編號", "有效期限", "決策狀態"]
+
+# 歷史展延清單：改存成 Excel 檔案放 S3（沿用 07 頁同一個 bucket），不是表格
+S3_BUCKET = "cert-query-pdf"
+HISTORY_PREFIX = "renewal-history"
+TRASH_PREFIX = "renewal-history-trash"
+TRASH_RETENTION_DAYS = 60
 
 
 # ─────────────────────────────────────────────
@@ -153,29 +159,78 @@ def save_pending_to_sheet(df: pd.DataFrame):
     load_pending_from_sheet.clear()
 
 
-@st.cache_data(ttl=30, show_spinner=False)
-def load_history_from_sheet():
+# ─────────────────────────────────────────────
+# 歷史展延清單：S3 檔案管理（Excel 檔＋刪除＋資源回收桶）
+# ─────────────────────────────────────────────
+def get_s3_client():
+    return boto3.client(
+        "s3", region_name="ap-east-2",
+        aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+    )
+
+
+def _s3_list(prefix):
+    s3 = get_s3_client()
+    paginator = s3.get_paginator("list_objects_v2")
+    items = []
+    for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix + "/"):
+        for obj in page.get("Contents", []):
+            if obj["Key"].endswith("/"):
+                continue
+            items.append(obj)
+    items.sort(key=lambda o: o["LastModified"], reverse=True)
+    return items
+
+
+def upload_history_excel(df: pd.DataFrame, dt: datetime = None) -> str:
+    """把這次送出的展延資料存成一份 Excel 檔，上傳到 S3。檔名依日期時間命名，回傳檔名。"""
+    dt = dt or datetime.now()
+    filename = dt.strftime("%Y-%m-%d_%H%M%S") + ".xlsx"
+    buf = BytesIO()
+    df.to_excel(buf, index=False, engine="openpyxl")
+    buf.seek(0)
+    s3 = get_s3_client()
+    s3.upload_fileobj(buf, S3_BUCKET, f"{HISTORY_PREFIX}/{filename}")
+    return filename
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def download_s3_file_cached(key: str) -> bytes:
+    s3 = get_s3_client()
+    buf = BytesIO()
+    s3.download_fileobj(S3_BUCKET, key, buf)
+    buf.seek(0)
+    return buf.read()
+
+
+def move_to_trash(filename: str):
+    s3 = get_s3_client()
+    src_key = f"{HISTORY_PREFIX}/{filename}"
+    dst_key = f"{TRASH_PREFIX}/{filename}"
+    s3.copy_object(Bucket=S3_BUCKET, CopySource={"Bucket": S3_BUCKET, "Key": src_key}, Key=dst_key)
+    s3.delete_object(Bucket=S3_BUCKET, Key=src_key)
+
+
+def restore_from_trash(filename: str):
+    s3 = get_s3_client()
+    src_key = f"{TRASH_PREFIX}/{filename}"
+    dst_key = f"{HISTORY_PREFIX}/{filename}"
+    s3.copy_object(Bucket=S3_BUCKET, CopySource={"Bucket": S3_BUCKET, "Key": src_key}, Key=dst_key)
+    s3.delete_object(Bucket=S3_BUCKET, Key=src_key)
+
+
+def purge_old_trash():
+    """資源回收桶裡超過 60 天的檔案永久刪除。每次打開回收桶畫面時順便檢查一次
+    （不是真的每天自動跑，而是「有人打開回收桶」才會觸發清理）。"""
     try:
-        gc = _get_gspread_client(readonly=True)
-        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
-        ws = sh.worksheet(HISTORY_TAB)
-        values = ws.get_all_values()
-        if len(values) < 2:
-            return pd.DataFrame(columns=HISTORY_COLUMNS)
-        return pd.DataFrame(values[1:], columns=values[0])
+        s3 = get_s3_client()
+        cutoff = datetime.now(timezone.utc) - timedelta(days=TRASH_RETENTION_DAYS)
+        for obj in _s3_list(TRASH_PREFIX):
+            if obj["LastModified"] < cutoff:
+                s3.delete_object(Bucket=S3_BUCKET, Key=obj["Key"])
     except Exception:
-        return pd.DataFrame(columns=HISTORY_COLUMNS)
-
-
-def append_to_history(rows_df: pd.DataFrame):
-    gc = _get_gspread_client(readonly=False)
-    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
-    ws = _get_or_create_ws(sh, HISTORY_TAB, rows=2000, cols=10)
-    existing = ws.get_all_values()
-    if not existing:
-        ws.append_row(HISTORY_COLUMNS)
-    ws.append_rows(rows_df.astype(str).values.tolist())
-    load_history_from_sheet.clear()
+        pass
 
 
 def _load_schedule_rows():
@@ -273,7 +328,7 @@ def render():
         </body></html>"""
 
     def send_mail(recipients, subject, html_body):
-        gmail_user = st.secrets["GMAIL_ADDRESS"]
+        gmail_user = st.secrets["GMAIL_USER"]
         gmail_pass = st.secrets["GMAIL_APP_PASSWORD"]
         msg = MIMEMultipart()
         msg["From"] = gmail_user
@@ -384,7 +439,7 @@ def render():
                     st.success(f"已寄出通知信給 {len(recipients)} 位收件人")
                     sent_ok = True
                 except KeyError:
-                    st.error("⚠️ 尚未設定寄信帳號，請在 Streamlit Cloud 的 Secrets 加入 GMAIL_ADDRESS 與 GMAIL_APP_PASSWORD")
+                    st.error("⚠️ 尚未設定寄信帳號，請在 Streamlit Cloud 的 Secrets 加入 GMAIL_USER 與 GMAIL_APP_PASSWORD")
                 except Exception as e:
                     st.error(f"寄信失敗：{e}")
 
@@ -407,19 +462,19 @@ def render():
                             try:
                                 save_pending_to_sheet(pending_df)
                             except Exception as e:
-                                st.warning(f"待展延清單寫入失敗：{e}")
+                                st.warning(f"確定展延清單寫入失敗：{e}")
 
-                        history_rows = pd.DataFrame([{
-                            "送出時間": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "室外機型號": r["室外機型號"], "類別": r["類別"],
-                            "證書編號": r["證書編號"], "有效期限": str(r["有效期限"]),
-                            "決策狀態": "要展延",
-                        } for _, r in to_renew.iterrows()])
-                        try:
-                            append_to_history(history_rows)
-                        except Exception as e:
-                            st.warning(f"歷史展延清單寫入失敗：{e}")
-                    st.success("已同步更新「待展延清單」與「歷史展延清單」，可展開下方面板查看。")
+                    # 這次送出的完整決策快照（含要展延／不展延），存成 Excel 上傳到歷史展延清單
+                    snapshot = edited_expiry.copy()
+                    snapshot["決策狀態"] = snapshot.apply(
+                        lambda r: "要展延" if r["要展延"] else ("不展延" if r["不展延"] else "尚未決定"), axis=1
+                    )
+                    snapshot = snapshot[["室外機型號", "類別", "證書編號", "有效期限", "剩餘天數", "決策狀態"]]
+                    try:
+                        saved_name = upload_history_excel(snapshot)
+                        st.success(f"已同步更新「確定展延清單」，並在「歷史展延清單」存了一份 {saved_name}。")
+                    except Exception as e:
+                        st.warning(f"歷史展延清單存檔失敗：{e}")
 
         st.divider()
         st.markdown("**⏰ 定時寄信設定**")
@@ -454,12 +509,12 @@ def render():
                 st.error(f"儲存失敗：{e}")
 
     # ══════════════════════════════════════════════
-    # 面板 2：待展延清單
+    # 面板 2：確定展延清單
     # ══════════════════════════════════════════════
-    with st.expander("📋　待展延清單", expanded=False):
+    with st.expander("📋　確定展延清單", expanded=False):
         pending_df = load_pending_from_sheet()
         if pending_df.empty:
-            st.caption("目前沒有待展延資料——在上方「商品生命週期」勾選「要展延」並送出後，會自動加進這裡。")
+            st.caption("目前沒有資料——在上方「商品生命週期」勾選「要展延」並送出後，會自動加進這裡。")
         else:
             st.caption(f"共 {len(pending_df)} 筆，年費／規費／空白欄位可直接在表格內編輯。")
             edited_pending = st.data_editor(
@@ -477,7 +532,7 @@ def render():
                 },
                 key="pending_editor",
             )
-            if st.button("💾 儲存待展延清單", key="save_pending_btn"):
+            if st.button("💾 儲存確定展延清單", key="save_pending_btn"):
                 try:
                     save_pending_to_sheet(edited_pending)
                     st.success("已儲存。")
@@ -485,13 +540,66 @@ def render():
                     st.error(f"儲存失敗：{e}")
 
     # ══════════════════════════════════════════════
-    # 面板 3：歷史展延清單
+    # 面板 3：歷史展延清單（S3 檔案清單，不是表格）
     # ══════════════════════════════════════════════
     with st.expander("🗂️　歷史展延清單", expanded=False):
-        history_df = load_history_from_sheet()
-        if history_df.empty:
-            st.caption("目前沒有歷史紀錄——每次在上方送出展延決策通知後，會自動在這裡累加一筆存檔。")
+        view_mode = st.radio("檢視", ["歷史紀錄", "資源回收桶"], horizontal=True, key="history_view_mode",
+                              label_visibility="collapsed")
+
+        if view_mode == "歷史紀錄":
+            try:
+                files = _s3_list(HISTORY_PREFIX)
+            except Exception as e:
+                st.error(f"讀取歷史紀錄失敗：{e}")
+                files = []
+
+            if not files:
+                st.caption("目前沒有歷史紀錄——每次在上方送出展延決策通知後，會自動存一份 Excel 檔在這裡。")
+            else:
+                st.caption(f"共 {len(files)} 份檔案，依時間新到舊排序。")
+                for obj in files:
+                    filename = obj["Key"].split("/")[-1]
+                    c1, c2, c3 = st.columns([3, 1.2, 1])
+                    with c1:
+                        st.markdown(f"📄 {filename}")
+                    with c2:
+                        try:
+                            data = download_s3_file_cached(obj["Key"])
+                            st.download_button("下載", data, file_name=filename,
+                                                use_container_width=True, key=f"dl_{filename}")
+                        except Exception as e:
+                            st.caption(f"下載失敗：{e}")
+                    with c3:
+                        if st.button("🗑️ 刪除", key=f"del_{filename}", use_container_width=True):
+                            try:
+                                move_to_trash(filename)
+                                download_s3_file_cached.clear()
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"刪除失敗：{e}")
+
         else:
-            st.caption(f"共 {len(history_df)} 筆歷史紀錄（依送出時間由新到舊）。")
-            display_hist = history_df.iloc[::-1].reset_index(drop=True)
-            st.dataframe(display_hist, use_container_width=True, hide_index=True)
+            purge_old_trash()  # 打開回收桶時順便清掉超過 60 天的
+            try:
+                trash_files = _s3_list(TRASH_PREFIX)
+            except Exception as e:
+                st.error(f"讀取資源回收桶失敗：{e}")
+                trash_files = []
+
+            st.caption(f"回收桶內的檔案會在刪除後 {TRASH_RETENTION_DAYS} 天自動永久清除。")
+            if not trash_files:
+                st.caption("回收桶目前是空的。")
+            else:
+                for obj in trash_files:
+                    filename = obj["Key"].split("/")[-1]
+                    deleted_at = obj["LastModified"].strftime("%Y-%m-%d %H:%M")
+                    c1, c2 = st.columns([4, 1])
+                    with c1:
+                        st.markdown(f"🗑️ {filename}　　*刪除於 {deleted_at}*")
+                    with c2:
+                        if st.button("↩️ 還原", key=f"restore_{filename}", use_container_width=True):
+                            try:
+                                restore_from_trash(filename)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"還原失敗：{e}")
