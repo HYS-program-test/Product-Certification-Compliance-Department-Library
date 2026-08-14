@@ -392,7 +392,7 @@ def render():
 
         edited_expiry = st.data_editor(
             expiry_view[["室外機型號", "類別", "證書編號", "有效期限", "剩餘天數", "要展延", "不展延"]],
-            use_container_width=True, hide_index=True,
+            use_container_width=True, hide_index=True, height=420,
             disabled=["室外機型號", "類別", "證書編號", "有效期限", "剩餘天數"],
             column_config={
                 "要展延": st.column_config.CheckboxColumn("要展延"),
