@@ -7,7 +7,7 @@ import boto3
 from io import BytesIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PRODUCTDEPT_SHEET_ID = "1hEt4uxBABBicxIMJuR57lMiigQYF02CQHZfB-Nc6vjo"  # Total Certificate Management
@@ -20,7 +20,6 @@ PENDING_COLUMNS = ["室外機型號", "類別", "證書編號", "有效期限", 
 # 歷史展延清單：改存成 Excel 檔案放 S3（沿用 07 頁同一個 bucket），不是表格
 S3_BUCKET = "cert-query-pdf"
 HISTORY_PREFIX = "renewal-history"
-TRASH_PREFIX = "renewal-history-trash"
 TRASH_RETENTION_DAYS = 60
 
 
@@ -161,7 +160,12 @@ def save_pending_to_sheet(df: pd.DataFrame):
 
 # ─────────────────────────────────────────────
 # 歷史展延清單：S3 檔案管理（Excel 檔＋刪除＋資源回收桶）
+# 「刪除」「還原」「60天清空」全部都只操作 Google Sheets 上的狀態紀錄，
+# 不會呼叫任何 S3 刪除 API，S3 上的實體檔案永遠不會被動到。
 # ─────────────────────────────────────────────
+TRASH_TRACKER_TAB = "RenewalHistoryTrash"  # 檔名 / 狀態(deleted/purged) / 刪除時間
+
+
 def get_s3_client():
     return boto3.client(
         "s3", region_name="ap-east-2",
@@ -204,31 +208,74 @@ def download_s3_file_cached(key: str) -> bytes:
     return buf.read()
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def load_trash_tracker() -> pd.DataFrame:
+    """狀態紀錄表：deleted＝在回收桶裡，purged＝已經永久清空（畫面上兩邊都不會再顯示，
+    但 S3 上的檔案本身完全不受影響）。"""
+    cols = ["檔名", "狀態", "刪除時間"]
+    try:
+        gc = _get_gspread_client(readonly=True)
+        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+        ws = sh.worksheet(TRASH_TRACKER_TAB)
+        values = ws.get_all_values()
+        if len(values) < 2:
+            return pd.DataFrame(columns=cols)
+        return pd.DataFrame(values[1:], columns=values[0])
+    except Exception:
+        return pd.DataFrame(columns=cols)
+
+
+def save_trash_tracker(df: pd.DataFrame):
+    gc = _get_gspread_client(readonly=False)
+    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+    ws = _get_or_create_ws(sh, TRASH_TRACKER_TAB, rows=1000, cols=3)
+    ws.clear()
+    data = [["檔名", "狀態", "刪除時間"]] + df.astype(str).values.tolist()
+    ws.update(data)
+    load_trash_tracker.clear()
+
+
 def move_to_trash(filename: str):
-    s3 = get_s3_client()
-    src_key = f"{HISTORY_PREFIX}/{filename}"
-    dst_key = f"{TRASH_PREFIX}/{filename}"
-    s3.copy_object(Bucket=S3_BUCKET, CopySource={"Bucket": S3_BUCKET, "Key": src_key}, Key=dst_key)
-    s3.delete_object(Bucket=S3_BUCKET, Key=src_key)
+    """把檔名標記成 deleted，畫面上會從「歷史紀錄」消失、出現在「資源回收桶」。
+    完全不動 S3 上的實體檔案。"""
+    tracker = load_trash_tracker()
+    tracker = tracker[tracker["檔名"] != filename]
+    new_row = pd.DataFrame([{
+        "檔名": filename, "狀態": "deleted",
+        "刪除時間": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }])
+    tracker = pd.concat([tracker, new_row], ignore_index=True)
+    save_trash_tracker(tracker)
 
 
 def restore_from_trash(filename: str):
-    s3 = get_s3_client()
-    src_key = f"{TRASH_PREFIX}/{filename}"
-    dst_key = f"{HISTORY_PREFIX}/{filename}"
-    s3.copy_object(Bucket=S3_BUCKET, CopySource={"Bucket": S3_BUCKET, "Key": src_key}, Key=dst_key)
-    s3.delete_object(Bucket=S3_BUCKET, Key=src_key)
+    """把這個檔名的狀態紀錄整筆移除，等於回到「歷史紀錄」清單。"""
+    tracker = load_trash_tracker()
+    tracker = tracker[tracker["檔名"] != filename]
+    save_trash_tracker(tracker)
 
 
 def purge_old_trash():
-    """資源回收桶裡超過 60 天的檔案永久刪除。每次打開回收桶畫面時順便檢查一次
-    （不是真的每天自動跑，而是「有人打開回收桶」才會觸發清理）。"""
+    """回收桶裡超過 60 天的項目，狀態改成 purged——畫面上兩邊都不再顯示，
+    但只是改狀態文字，不會呼叫任何 S3 刪除 API，S3 上的檔案永遠留著。"""
     try:
-        s3 = get_s3_client()
-        cutoff = datetime.now(timezone.utc) - timedelta(days=TRASH_RETENTION_DAYS)
-        for obj in _s3_list(TRASH_PREFIX):
-            if obj["LastModified"] < cutoff:
-                s3.delete_object(Bucket=S3_BUCKET, Key=obj["Key"])
+        tracker = load_trash_tracker()
+        if tracker.empty:
+            return
+        cutoff = datetime.now() - timedelta(days=TRASH_RETENTION_DAYS)
+        changed = False
+        for i, row in tracker.iterrows():
+            if row["狀態"] != "deleted":
+                continue
+            try:
+                deleted_at = datetime.strptime(row["刪除時間"], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                continue
+            if deleted_at < cutoff:
+                tracker.at[i, "狀態"] = "purged"
+                changed = True
+        if changed:
+            save_trash_tracker(tracker)
     except Exception:
         pass
 
@@ -540,18 +587,25 @@ def render():
                     st.error(f"儲存失敗：{e}")
 
     # ══════════════════════════════════════════════
-    # 面板 3：歷史展延清單（S3 檔案清單，不是表格）
+    # 面板 3：歷史展延清單（S3 檔案清單 + Google Sheets 狀態紀錄，不動 S3 實體檔案）
     # ══════════════════════════════════════════════
     with st.expander("🗂️　歷史展延清單", expanded=False):
+        purge_old_trash()  # 每次打開面板順便檢查有沒有超過 60 天要標記成 purged 的
+        tracker = load_trash_tracker()
+        deleted_names = set(tracker.loc[tracker["狀態"] == "deleted", "檔名"]) if not tracker.empty else set()
+        hidden_names = set(tracker["檔名"]) if not tracker.empty else set()  # deleted + purged，兩種都不算「作用中」
+
         view_mode = st.radio("檢視", ["歷史紀錄", "資源回收桶"], horizontal=True, key="history_view_mode",
                               label_visibility="collapsed")
 
         if view_mode == "歷史紀錄":
             try:
-                files = _s3_list(HISTORY_PREFIX)
+                all_files = _s3_list(HISTORY_PREFIX)
             except Exception as e:
                 st.error(f"讀取歷史紀錄失敗：{e}")
-                files = []
+                all_files = []
+
+            files = [obj for obj in all_files if obj["Key"].split("/")[-1] not in hidden_names]
 
             if not files:
                 st.caption("目前沒有歷史紀錄——每次在上方送出展延決策通知後，會自動存一份 Excel 檔在這裡。")
@@ -573,29 +627,21 @@ def render():
                         if st.button("🗑️ 刪除", key=f"del_{filename}", use_container_width=True):
                             try:
                                 move_to_trash(filename)
-                                download_s3_file_cached.clear()
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"刪除失敗：{e}")
 
         else:
-            purge_old_trash()  # 打開回收桶時順便清掉超過 60 天的
-            try:
-                trash_files = _s3_list(TRASH_PREFIX)
-            except Exception as e:
-                st.error(f"讀取資源回收桶失敗：{e}")
-                trash_files = []
-
-            st.caption(f"回收桶內的檔案會在刪除後 {TRASH_RETENTION_DAYS} 天自動永久清除。")
-            if not trash_files:
+            st.caption(f"回收桶內的項目會在刪除後 {TRASH_RETENTION_DAYS} 天從畫面上永久消失（不會動到 S3 上的實體檔案）。")
+            if not deleted_names:
                 st.caption("回收桶目前是空的。")
             else:
-                for obj in trash_files:
-                    filename = obj["Key"].split("/")[-1]
-                    deleted_at = obj["LastModified"].strftime("%Y-%m-%d %H:%M")
+                trash_rows = tracker[tracker["狀態"] == "deleted"].sort_values("刪除時間", ascending=False)
+                for _, row in trash_rows.iterrows():
+                    filename = row["檔名"]
                     c1, c2 = st.columns([4, 1])
                     with c1:
-                        st.markdown(f"🗑️ {filename}　　*刪除於 {deleted_at}*")
+                        st.markdown(f"🗑️ {filename}　　*刪除於 {row['刪除時間']}*")
                     with c2:
                         if st.button("↩️ 還原", key=f"restore_{filename}", use_container_width=True):
                             try:

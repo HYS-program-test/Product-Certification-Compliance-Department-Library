@@ -32,7 +32,7 @@ PAGES = [
     {"id": "05", "label": "PDF掃描歸檔", "group": "tools"},
     {"id": "06", "label": "PDF切割工具", "group": "tools"},
     {"id": "07", "label": "商品證書查詢", "group": "tools"},
-    {"id": "08", "label": "生命週期審核", "group": "tools"},
+    {"id": "08", "label": "商品展延清單", "group": "tools"},
 ]
 
 # ─────────────────────────────────────────────
