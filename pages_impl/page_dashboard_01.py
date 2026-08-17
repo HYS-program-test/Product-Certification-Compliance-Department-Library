@@ -134,22 +134,30 @@ def render():
         st.session_state["p01_g2_page"] = 1
 
     nav_l, nav_mid, nav_r = st.columns([1, 12, 1])
-    with nav_l:
-        if st.button("◀", key="p01_prev_group", use_container_width=True,
-                      disabled=(st.session_state["p01_g2_page"] == 1)):
-            st.session_state["p01_g2_page"] = 1
-            st.rerun()
-    with nav_mid:
+    with st.container(key="p01_nav_arrows"):
         st.markdown(
-            f"<div style='text-align:center;color:#8A9AA3;font-size:.75rem;'>"
-            f"第 {st.session_state['p01_g2_page']} / 2 組</div>",
+            "<style>.st-key-p01_nav_arrows div[data-testid='stButton'] button {"
+            "border: none !important; background: transparent !important;"
+            "box-shadow: none !important; font-size: 1.1rem !important;}"
+            "</style>",
             unsafe_allow_html=True,
         )
-    with nav_r:
-        if st.button("▶", key="p01_next_group", use_container_width=True,
-                      disabled=(st.session_state["p01_g2_page"] == 2)):
-            st.session_state["p01_g2_page"] = 2
-            st.rerun()
+        with nav_l:
+            if st.button("◀", key="p01_prev_group", use_container_width=True,
+                          disabled=(st.session_state["p01_g2_page"] == 1)):
+                st.session_state["p01_g2_page"] = 1
+                st.rerun()
+        with nav_mid:
+            st.markdown(
+                f"<div style='text-align:center;color:#8A9AA3;font-size:.75rem;'>"
+                f"第 {st.session_state['p01_g2_page']} / 2 組</div>",
+                unsafe_allow_html=True,
+            )
+        with nav_r:
+            if st.button("▶", key="p01_next_group", use_container_width=True,
+                          disabled=(st.session_state["p01_g2_page"] == 2)):
+                st.session_state["p01_g2_page"] = 2
+                st.rerun()
 
     if st.session_state["p01_g2_page"] == 1:
         _render_group1(df, df_cert_unique, df_badge_unique)
@@ -234,21 +242,58 @@ def _render_group2():
     settings = cw.load_user_settings(username)
 
     if settings["顯示模式"] == "wide":
-        _render_wide_slot(cw, username, settings)
+        with st.container(key="chart_card_01_wide_custom"):
+            _render_display_only(cw, username, "wide", "image")
+            col_spacer, col_pop = st.columns([6, 1])
+            with col_pop:
+                _render_settings_popover(cw, username, settings)
     else:
         col4, col5, col6 = st.columns(3)
         with col4, st.container(key="chart_card_01_4_custom"):
-            _render_individual_slot(cw, username, settings, "4")
+            _render_display_only(cw, username, "4", settings.get("區塊4類型", "note"), settings.get("便條4內容", ""))
         with col5, st.container(key="chart_card_01_5_custom"):
-            _render_individual_slot(cw, username, settings, "5")
+            _render_display_only(cw, username, "5", settings.get("區塊5類型", "note"), settings.get("便條5內容", ""))
         with col6, st.container(key="chart_card_01_6_custom"):
-            _render_individual_slot(cw, username, settings, "6")
-            _render_mode_popover(cw, username, settings)
+            _render_display_only(cw, username, "6", settings.get("區塊6類型", "note"), settings.get("便條6內容", ""))
+            col_spacer, col_pop = st.columns([6, 1])
+            with col_pop:
+                _render_settings_popover(cw, username, settings)
 
 
-def _render_mode_popover(cw, username, settings):
+def _render_display_only(cw, username, slot, content_type, note_text=""):
+    """主畫面只顯示內容本身（便條紙文字或圖片），沒有任何編輯用的按鈕/選單"""
+    if content_type == "image":
+        existing = cw.load_custom_image(username, slot)
+        if existing:
+            st.markdown(
+                f"""<div style="height:{DONUT_H}px; display:flex; align-items:center;
+                justify-content:center; overflow:hidden;">
+                <img src="data:image/png;base64,{__import__('base64').b64encode(existing).decode()}"
+                style="max-width:none; max-height:none;" /></div>""",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"""<div style="height:{DONUT_H}px; display:flex; align-items:center;
+                justify-content:center; color:#C4CDD2; font-size:.8rem;">
+                （尚未上傳圖片，點右下角「⋯」設定）</div>""",
+                unsafe_allow_html=True,
+            )
+    else:
+        text_html = note_text.replace("\n", "<br>") if note_text else "（尚未填寫便條，點右下角「⋯」設定）"
+        color = "#33414A" if note_text else "#C4CDD2"
+        st.markdown(
+            f"""<div style="height:{DONUT_H}px; padding:.6rem; overflow-y:auto;
+            color:{color}; font-size:.85rem; line-height:1.6; white-space:pre-wrap;">
+            {text_html}</div>""",
+            unsafe_allow_html=True,
+        )
+
+
+def _render_settings_popover(cw, username, settings):
+    """所有編輯功能都收在這一個選單裡：顯示模式切換 + 各區塊內容設定"""
     with st.popover("⋯", use_container_width=False):
-        st.caption("顯示模式")
+        st.markdown("**顯示模式**")
         mode_label = st.radio(
             "顯示模式", ["個別區塊", "整列大圖"],
             index=0 if settings["顯示模式"] != "wide" else 1,
@@ -263,55 +308,49 @@ def _render_mode_popover(cw, username, settings):
                 st.error(f"儲存失敗：{e}")
             st.rerun()
 
+        st.divider()
 
-def _render_individual_slot(cw, username, settings, slot):
-    type_label = st.selectbox(
-        f"區塊{slot}內容", ["便條紙", "圖片"],
-        index=0 if settings.get(f"區塊{slot}類型", "note") != "image" else 1,
-        key=f"p01_slot_type_{slot}", label_visibility="collapsed",
-    )
-    new_type = "image" if type_label == "圖片" else "note"
-    if new_type != settings.get(f"區塊{slot}類型", "note"):
-        settings[f"區塊{slot}類型"] = new_type
-        try:
-            cw.save_user_settings(username, settings)
-        except Exception as e:
-            st.error(f"儲存失敗：{e}")
-        st.rerun()
+        if settings["顯示模式"] == "wide":
+            st.markdown("**整列大圖**")
+            _render_image_uploader_control(cw, username, "wide")
+        else:
+            for slot in ["4", "5", "6"]:
+                st.markdown(f"**區塊{slot}**")
+                type_label = st.selectbox(
+                    f"區塊{slot}內容", ["便條紙", "圖片"],
+                    index=0 if settings.get(f"區塊{slot}類型", "note") != "image" else 1,
+                    key=f"p01_slot_type_{slot}", label_visibility="collapsed",
+                )
+                new_type = "image" if type_label == "圖片" else "note"
+                if new_type != settings.get(f"區塊{slot}類型", "note"):
+                    settings[f"區塊{slot}類型"] = new_type
+                    try:
+                        cw.save_user_settings(username, settings)
+                    except Exception as e:
+                        st.error(f"儲存失敗：{e}")
+                    st.rerun()
 
-    if new_type == "note":
-        current = settings.get(f"便條{slot}內容", "")
-        new_text = st.text_area(
-            f"便條{slot}", value=current, max_chars=cw.NOTE_MAX_CHARS, height=140,
-            key=f"p01_note_{slot}", label_visibility="collapsed",
-        )
-        if st.button("💾 儲存", key=f"p01_note_save_{slot}", use_container_width=True):
-            settings[f"便條{slot}內容"] = new_text
-            try:
-                cw.save_user_settings(username, settings)
-                st.success("已儲存")
-            except Exception as e:
-                st.error(f"儲存失敗：{e}")
-    else:
-        _render_image_uploader(cw, username, slot)
+                if new_type == "note":
+                    current = settings.get(f"便條{slot}內容", "")
+                    new_text = st.text_area(
+                        f"便條{slot}", value=current, max_chars=cw.NOTE_MAX_CHARS, height=100,
+                        key=f"p01_note_{slot}", label_visibility="collapsed",
+                    )
+                    if st.button("💾 儲存", key=f"p01_note_save_{slot}", use_container_width=True):
+                        settings[f"便條{slot}內容"] = new_text
+                        try:
+                            cw.save_user_settings(username, settings)
+                            st.success("已儲存")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"儲存失敗：{e}")
+                else:
+                    _render_image_uploader_control(cw, username, slot)
+                if slot != "6":
+                    st.divider()
 
 
-def _render_wide_slot(cw, username, settings):
-    with st.container(key="chart_card_01_wide_custom"):
-        _render_image_uploader(cw, username, "wide")
-        _render_mode_popover(cw, username, settings)
-
-
-def _render_image_uploader(cw, username, slot):
-    existing = cw.load_custom_image(username, slot)
-    if existing:
-        st.markdown(
-            f"""<div style="height:{DONUT_H}px; display:flex; align-items:center;
-            justify-content:center; overflow:hidden;">
-            <img src="data:image/png;base64,{__import__('base64').b64encode(existing).decode()}"
-            style="max-width:none; max-height:none;" /></div>""",
-            unsafe_allow_html=True,
-        )
+def _render_image_uploader_control(cw, username, slot):
     uploaded = st.file_uploader(
         f"上傳圖片（區塊{slot}）", type=["png", "jpg", "jpeg"],
         key=f"p01_img_upload_{slot}", label_visibility="collapsed",
