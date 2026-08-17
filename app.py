@@ -238,14 +238,24 @@ def inject_shared_css():
       }
       .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
 
-      /* 01 頁區塊4/5/6 左右切換箭頭：去邊框，放樣式表最後面確保優先權最高 */
+      /* 01 頁區塊4/5/6 左右切換箭頭：邊框拿不掉，改成白色跟背景融為一體 */
       div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button {
-        border: none !important; background: transparent !important;
+        border: 1px solid #FFFFFF !important; background: transparent !important;
         box-shadow: none !important; outline: none !important;
         font-size: 1.1rem !important; color: #33414A !important;
       }
       div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button:disabled {
         color: #C4CDD2 !important;
+      }
+
+      /* 01 頁「⋯」選單按鈕：拿掉下拉箭頭圖示，邊框改白色 */
+      div[data-testid="stPopover"] button {
+        border: 1px solid #FFFFFF !important; box-shadow: none !important;
+      }
+      div[data-testid="stPopover"] button svg,
+      div[data-testid="stPopoverButton"] svg,
+      div[data-testid="stPopover"] [data-testid="stIconMaterial"] {
+        display: none !important;
       }
     </style>
     """, unsafe_allow_html=True)
