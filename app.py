@@ -237,6 +237,16 @@ def inject_shared_css():
         margin-top: -3rem !important;
       }
       .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
+
+      /* 01 頁區塊4/5/6 左右切換箭頭：去邊框，放樣式表最後面確保優先權最高 */
+      div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button {
+        border: none !important; background: transparent !important;
+        box-shadow: none !important; outline: none !important;
+        font-size: 1.1rem !important; color: #33414A !important;
+      }
+      div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button:disabled {
+        color: #C4CDD2 !important;
+      }
     </style>
     """, unsafe_allow_html=True)
 

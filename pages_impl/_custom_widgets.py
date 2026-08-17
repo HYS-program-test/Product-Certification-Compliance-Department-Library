@@ -2,11 +2,12 @@
 01 頁區塊 4/5/6「組2」自訂內容（圖片／便條紙）的存取層。
 每個登入帳號的內容各自獨立，互不影響。
 
-- 便條紙文字 + 每格顯示模式 + 整列/個別切換：存 Google Sheets（Library tool 08 這份，新分頁「01自訂設定」）
+- 便條紙文字 + 每格顯示模式 + 圖片尺寸設定：存 Google Sheets（Library tool 08 這份，新分頁「01自訂設定」）
 - 圖片：存 S3（沿用 07/08 頁同一個 bucket，開新路徑 dashboard01-custom/）
 """
 import streamlit as st
 import boto3
+import base64
 from io import BytesIO
 from datetime import datetime
 
@@ -17,13 +18,15 @@ S3_BUCKET = "cert-query-pdf"
 CUSTOM_PREFIX = "dashboard01-custom"
 
 NOTE_MAX_CHARS = 200
-SETTINGS_HEADER = [
-    "帳號", "顯示模式",
-    "區塊4類型", "便條4內容",
-    "區塊5類型", "便條5內容",
-    "區塊6類型", "便條6內容",
-    "更新時間",
-]
+SLOTS = ["4", "5", "6", "wide"]
+SETTINGS_HEADER = (
+    ["帳號", "顯示模式"]
+    + [f"{prefix}{slot}" for slot in ["4", "5", "6"] for prefix in ["區塊", "便條"]]
+    + [f"圖片{slot}尺寸" for slot in SLOTS]
+    + ["更新時間"]
+)
+# 展開後實際欄位順序：帳號, 顯示模式, 區塊4, 便條4, 區塊5, 便條5, 區塊6, 便條6,
+#                     圖片4尺寸, 圖片5尺寸, 圖片6尺寸, 圖片wide尺寸, 更新時間
 
 
 def _get_gspread_client(readonly=True):
@@ -37,7 +40,7 @@ def _get_gspread_client(readonly=True):
     return gspread.authorize(creds)
 
 
-def _get_or_create_ws(sh, title, rows=200, cols=10):
+def _get_or_create_ws(sh, title, rows=200, cols=15):
     try:
         return sh.worksheet(title)
     except Exception:
@@ -54,9 +57,10 @@ def get_s3_client():
 
 DEFAULT_SETTINGS = {
     "顯示模式": "individual",
-    "區塊4類型": "note", "便條4內容": "",
-    "區塊5類型": "note", "便條5內容": "",
-    "區塊6類型": "note", "便條6內容": "",
+    "區塊4": "note", "便條4": "",
+    "區塊5": "note", "便條5": "",
+    "區塊6": "note", "便條6": "",
+    "圖片4尺寸": "", "圖片5尺寸": "", "圖片6尺寸": "", "圖片wide尺寸": "",
 }
 
 
@@ -72,9 +76,11 @@ def load_user_settings(username: str) -> dict:
                 row = row + [""] * (len(SETTINGS_HEADER) - len(row))
                 return {
                     "顯示模式": row[1] or "individual",
-                    "區塊4類型": row[2] or "note", "便條4內容": row[3],
-                    "區塊5類型": row[4] or "note", "便條5內容": row[5],
-                    "區塊6類型": row[6] or "note", "便條6內容": row[7],
+                    "區塊4": row[2] or "note", "便條4": row[3],
+                    "區塊5": row[4] or "note", "便條5": row[5],
+                    "區塊6": row[6] or "note", "便條6": row[7],
+                    "圖片4尺寸": row[8], "圖片5尺寸": row[9],
+                    "圖片6尺寸": row[10], "圖片wide尺寸": row[11],
                 }
     except Exception:
         pass
@@ -90,9 +96,11 @@ def save_user_settings(username: str, settings: dict):
 
     new_row = [
         username, settings.get("顯示模式", "individual"),
-        settings.get("區塊4類型", "note"), settings.get("便條4內容", ""),
-        settings.get("區塊5類型", "note"), settings.get("便條5內容", ""),
-        settings.get("區塊6類型", "note"), settings.get("便條6內容", ""),
+        settings.get("區塊4", "note"), settings.get("便條4", ""),
+        settings.get("區塊5", "note"), settings.get("便條5", ""),
+        settings.get("區塊6", "note"), settings.get("便條6", ""),
+        settings.get("圖片4尺寸", ""), settings.get("圖片5尺寸", ""),
+        settings.get("圖片6尺寸", ""), settings.get("圖片wide尺寸", ""),
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     ]
     found = False
@@ -109,6 +117,25 @@ def save_user_settings(username: str, settings: dict):
     load_user_settings.clear()
 
 
+def get_image_size(username: str, slot: str):
+    """回傳 (寬, 高) 的 tuple（像素整數），沒設定就回傳 (None, None) 代表維持原始大小"""
+    settings = load_user_settings(username)
+    raw = settings.get(f"圖片{slot}尺寸", "")
+    if not raw or "x" not in raw:
+        return (None, None)
+    try:
+        w, h = raw.split("x")
+        return (int(w), int(h))
+    except (ValueError, TypeError):
+        return (None, None)
+
+
+def save_image_size(username: str, slot: str, width, height):
+    settings = load_user_settings(username)
+    settings[f"圖片{slot}尺寸"] = f"{int(width)}x{int(height)}" if width and height else ""
+    save_user_settings(username, settings)
+
+
 def upload_custom_image(username: str, slot: str, file_bytes: bytes):
     """圖片統一轉存成 PNG，S3 key 固定是 {帳號}/{slot}.png，不用另外追蹤副檔名"""
     from PIL import Image
@@ -120,9 +147,10 @@ def upload_custom_image(username: str, slot: str, file_bytes: bytes):
     key = f"{CUSTOM_PREFIX}/{username}/{slot}.png"
     s3.upload_fileobj(buf, S3_BUCKET, key)
     load_custom_image.clear()
+    load_custom_image_b64.clear()
 
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=3600, show_spinner=False)
 def load_custom_image(username: str, slot: str):
     try:
         s3 = get_s3_client()
@@ -133,3 +161,13 @@ def load_custom_image(username: str, slot: str):
         return buf.read()
     except Exception:
         return None
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_custom_image_b64(username: str, slot: str):
+    """把圖片預先編碼成 base64 字串並快取住，避免每次重新整理都要重新編碼，
+    是造成畫面閃爍的主因之一（每次都產生新字串，瀏覽器會整張圖重新載入）"""
+    raw = load_custom_image(username, slot)
+    if raw is None:
+        return None
+    return base64.b64encode(raw).decode()

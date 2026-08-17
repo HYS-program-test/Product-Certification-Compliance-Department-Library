@@ -135,13 +135,6 @@ def render():
 
     nav_l, nav_mid, nav_r = st.columns([1, 12, 1])
     with st.container(key="p01_nav_arrows"):
-        st.markdown(
-            "<style>.st-key-p01_nav_arrows div[data-testid='stButton'] button {"
-            "border: none !important; background: transparent !important;"
-            "box-shadow: none !important; font-size: 1.1rem !important;}"
-            "</style>",
-            unsafe_allow_html=True,
-        )
         with nav_l:
             if st.button("◀", key="p01_prev_group", use_container_width=True,
                           disabled=(st.session_state["p01_g2_page"] == 1)):
@@ -250,49 +243,52 @@ def _render_group2():
     else:
         col4, col5, col6 = st.columns(3)
         with col4, st.container(key="chart_card_01_4_custom"):
-            _render_display_only(cw, username, "4", settings.get("區塊4類型", "note"), settings.get("便條4內容", ""))
+            _render_display_only(cw, username, "4", settings.get("區塊4", "note"), settings.get("便條4", ""))
         with col5, st.container(key="chart_card_01_5_custom"):
-            _render_display_only(cw, username, "5", settings.get("區塊5類型", "note"), settings.get("便條5內容", ""))
+            _render_display_only(cw, username, "5", settings.get("區塊5", "note"), settings.get("便條5", ""))
         with col6, st.container(key="chart_card_01_6_custom"):
-            _render_display_only(cw, username, "6", settings.get("區塊6類型", "note"), settings.get("便條6內容", ""))
+            _render_display_only(cw, username, "6", settings.get("區塊6", "note"), settings.get("便條6", ""))
             col_spacer, col_pop = st.columns([6, 1])
             with col_pop:
                 _render_settings_popover(cw, username, settings)
 
 
 def _render_display_only(cw, username, slot, content_type, note_text=""):
-    """主畫面只顯示內容本身（便條紙文字或圖片），沒有任何編輯用的按鈕/選單"""
+    """主畫面只顯示內容本身（便條紙文字或圖片），沒有任何編輯用的按鈕/選單，也不顯示提示文字"""
     if content_type == "image":
         existing = cw.load_custom_image(username, slot)
         if existing:
             st.markdown(
                 f"""<div style="height:{DONUT_H}px; display:flex; align-items:center;
                 justify-content:center; overflow:hidden;">
-                <img src="data:image/png;base64,{__import__('base64').b64encode(existing).decode()}"
+                <img src="data:image/png;base64,{cw.load_custom_image_b64(username, slot)}"
                 style="max-width:none; max-height:none;" /></div>""",
                 unsafe_allow_html=True,
             )
         else:
+            st.markdown(f'<div style="height:{DONUT_H}px;"></div>', unsafe_allow_html=True)
+    else:
+        if note_text:
+            text_html = note_text.replace("\n", "<br>")
             st.markdown(
-                f"""<div style="height:{DONUT_H}px; display:flex; align-items:center;
-                justify-content:center; color:#C4CDD2; font-size:.8rem;">
-                （尚未上傳圖片，點右下角「⋯」設定）</div>""",
+                f"""<div style="height:{DONUT_H}px; padding:.6rem; overflow-y:auto;
+                color:#33414A; font-size:.85rem; line-height:1.6; white-space:pre-wrap;">
+                {text_html}</div>""",
                 unsafe_allow_html=True,
             )
-    else:
-        text_html = note_text.replace("\n", "<br>") if note_text else "（尚未填寫便條，點右下角「⋯」設定）"
-        color = "#33414A" if note_text else "#C4CDD2"
-        st.markdown(
-            f"""<div style="height:{DONUT_H}px; padding:.6rem; overflow-y:auto;
-            color:{color}; font-size:.85rem; line-height:1.6; white-space:pre-wrap;">
-            {text_html}</div>""",
-            unsafe_allow_html=True,
-        )
+        else:
+            st.markdown(f'<div style="height:{DONUT_H}px;"></div>', unsafe_allow_html=True)
 
 
 def _render_settings_popover(cw, username, settings):
     """所有編輯功能都收在這一個選單裡：顯示模式切換 + 各區塊內容設定"""
     with st.popover("⋯", use_container_width=False):
+        st.caption(
+            f"顯示範圍限制：高度固定 {DONUT_H}px；寬度不是固定值，"
+            "會隨瀏覽器視窗大小自動調整（個別區塊模式約為整排寬度的 1/3，整列大圖模式為整排寬度）。"
+        )
+        st.divider()
+
         st.markdown("**顯示模式**")
         mode_label = st.radio(
             "顯示模式", ["個別區塊", "整列大圖"],
@@ -318,12 +314,12 @@ def _render_settings_popover(cw, username, settings):
                 st.markdown(f"**區塊{slot}**")
                 type_label = st.selectbox(
                     f"區塊{slot}內容", ["便條紙", "圖片"],
-                    index=0 if settings.get(f"區塊{slot}類型", "note") != "image" else 1,
+                    index=0 if settings.get(f"區塊{slot}", "note") != "image" else 1,
                     key=f"p01_slot_type_{slot}", label_visibility="collapsed",
                 )
                 new_type = "image" if type_label == "圖片" else "note"
-                if new_type != settings.get(f"區塊{slot}類型", "note"):
-                    settings[f"區塊{slot}類型"] = new_type
+                if new_type != settings.get(f"區塊{slot}", "note"):
+                    settings[f"區塊{slot}"] = new_type
                     try:
                         cw.save_user_settings(username, settings)
                     except Exception as e:
@@ -331,13 +327,13 @@ def _render_settings_popover(cw, username, settings):
                     st.rerun()
 
                 if new_type == "note":
-                    current = settings.get(f"便條{slot}內容", "")
+                    current = settings.get(f"便條{slot}", "")
                     new_text = st.text_area(
                         f"便條{slot}", value=current, max_chars=cw.NOTE_MAX_CHARS, height=100,
                         key=f"p01_note_{slot}", label_visibility="collapsed",
                     )
                     if st.button("💾 儲存", key=f"p01_note_save_{slot}", use_container_width=True):
-                        settings[f"便條{slot}內容"] = new_text
+                        settings[f"便條{slot}"] = new_text
                         try:
                             cw.save_user_settings(username, settings)
                             st.success("已儲存")
