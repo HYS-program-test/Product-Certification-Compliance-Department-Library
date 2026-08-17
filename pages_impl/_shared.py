@@ -3,7 +3,7 @@ import streamlit as st
 PAGE_META = {
     "01": {"icon": "📊", "title": "證書管理",   "sub": "商品證書管理總覽"},
     "02": {"icon": "📈", "title": "風險管理",   "sub": "到期風險分層／標章覆蓋缺口／CSPF實測風險／資料品質異常"},
-    "03": {"icon": "🔍", "title": "明細查詢",   "sub": "型號／證書／能效完整明細"},
+    "03": {"icon": "🔍", "title": "證書總表",   "sub": "型號／證書／能效完整明細"},
     "04": {"icon": "⚠️", "title": "管理預警",   "sub": "90天內到期／標章覆蓋缺口／CSPF低於標示值／資料品質異常"},
     "05": {"icon": "🗂️", "title": "PDF掃描歸檔", "sub": "掃描檔上傳 → OCR辨識 → 寫入 Total Certificate Management"},
     "06": {"icon": "✂️", "title": "PDF切割工具", "sub": "多份文件掃描檔 → 自動偵測標題 → 拆分下載"},

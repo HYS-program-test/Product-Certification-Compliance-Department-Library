@@ -18,9 +18,9 @@ from datetime import datetime
 DATA_SHEET_ID = "1hEt4uxBABBicxIMJuR57lMiigQYF02CQHZfB-Nc6vjo"  # Total Certificate Management
 DATA_WORKSHEET_NAME = "工作表1"
 
-COL_LETTERS = ["A", "B", "C", "F", "G", "N", "X", "Y", "Z", "AC", "AD", "AG", "AI"]
+COL_LETTERS = ["A", "B", "C", "F", "G", "H", "N", "X", "Y", "Z", "AC", "AD", "AG", "AI"]
 COL_NAMES = [
-    "實驗室", "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限",
+    "實驗室", "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "所有搭配室內機",
     "安規測試報告編號", "CSPF_實測", "CSPF_標示", "CSPF實測標示比",
     "節能標章證書編號", "節能標章有效日期", "能源效率分級", "登錄編號",
 ]

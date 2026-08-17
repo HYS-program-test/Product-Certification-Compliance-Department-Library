@@ -31,8 +31,8 @@ def render():
     df = apply_filters(df_all, category, lab, grade, badge)
 
     show_cols = [
-        "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "商品驗證剩餘天數",
-        "節能標章證書編號", "節能標章有效日期", "節能標章剩餘天數",
+        "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "所有搭配室內機",
+        "節能標章證書編號", "節能標章有效日期",
         "能源效率分級", "CSPF_實測", "CSPF_標示", "登錄編號",
     ]
 
@@ -62,4 +62,9 @@ def render():
     st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
     with st.container(key="chart_card_03_table"):
         display_df = df[show_cols]
-        st.dataframe(display_df, use_container_width=True, hide_index=True, height=560)
+        st.dataframe(
+            display_df, use_container_width=True, hide_index=True, height=560,
+            column_config={
+                "所有搭配室內機": st.column_config.TextColumn("所有搭配室內機", width="medium"),
+            },
+        )
