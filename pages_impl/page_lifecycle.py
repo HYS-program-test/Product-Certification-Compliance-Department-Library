@@ -10,10 +10,11 @@ from email.mime.multipart import MIMEMultipart
 from datetime import date, datetime, timedelta
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PRODUCTDEPT_SHEET_ID = "1hEt4uxBABBicxIMJuR57lMiigQYF02CQHZfB-Nc6vjo"  # Total Certificate Management
+PRODUCTDEPT_SHEET_ID = "1hEt4uxBABBicxIMJuR57lMiigQYF02CQHZfB-Nc6vjo"  # Total Certificate Management（原始商品證書資料，不動）
+OPS_SHEET_ID = "1DpsBjUnt45boxkN1LeZuELC0v2mqszn2PBB_TL1OqDQ"  # Library tool 08（展延流程操作用，跟 Total Certificate Management 分開）
 
-DECISIONS_TAB = "RenewalDecisions"   # 展延/不展延 勾選狀態，跟外部獨立網站共用同一份，達成同步
-PENDING_TAB = "RenewalPending"       # 確定展延清單（年費/規費等可手動填的欄位）
+DECISIONS_TAB = "展延決策狀態"   # 展延/不展延 勾選狀態，跟外部獨立網站共用同一份，達成同步
+PENDING_TAB = "確定展延清單"    # 確定展延清單（年費/規費等可手動填的欄位）
 
 PENDING_COLUMNS = ["室外機型號", "類別", "證書編號", "有效期限", "年費", "規費", "空白1", "空白2"]
 
@@ -103,7 +104,7 @@ def load_decisions_from_sheet():
     """讀取展延/不展延勾選狀態，跟外部獨立網站共用同一份分頁，達成跨部署同步。"""
     try:
         gc = _get_gspread_client(readonly=True)
-        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+        sh = gc.open_by_key(OPS_SHEET_ID)
         ws = sh.worksheet(DECISIONS_TAB)
         values = ws.get_all_values()
         decisions = {}
@@ -122,7 +123,7 @@ def load_decisions_from_sheet():
 def save_decisions_to_sheet(decisions: dict):
     """把目前的勾選狀態整份寫回 Google Sheets（清空重寫）。"""
     gc = _get_gspread_client(readonly=False)
-    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+    sh = gc.open_by_key(OPS_SHEET_ID)
     ws = _get_or_create_ws(sh, DECISIONS_TAB, rows=500, cols=3)
     ws.clear()
     header = ["證書編號", "要展延", "不展延"]
@@ -138,7 +139,7 @@ def save_decisions_to_sheet(decisions: dict):
 def load_pending_from_sheet():
     try:
         gc = _get_gspread_client(readonly=True)
-        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+        sh = gc.open_by_key(OPS_SHEET_ID)
         ws = sh.worksheet(PENDING_TAB)
         values = ws.get_all_values()
         if len(values) < 2:
@@ -150,7 +151,7 @@ def load_pending_from_sheet():
 
 def save_pending_to_sheet(df: pd.DataFrame):
     gc = _get_gspread_client(readonly=False)
-    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+    sh = gc.open_by_key(OPS_SHEET_ID)
     ws = _get_or_create_ws(sh, PENDING_TAB, rows=500, cols=10)
     ws.clear()
     data = [list(df.columns)] + df.astype(str).values.tolist()
@@ -163,7 +164,7 @@ def save_pending_to_sheet(df: pd.DataFrame):
 # 「刪除」「還原」「60天清空」全部都只操作 Google Sheets 上的狀態紀錄，
 # 不會呼叫任何 S3 刪除 API，S3 上的實體檔案永遠不會被動到。
 # ─────────────────────────────────────────────
-TRASH_TRACKER_TAB = "RenewalHistoryTrash"  # 檔名 / 狀態(deleted/purged) / 刪除時間
+TRASH_TRACKER_TAB = "歷史展延刪除紀錄"  # 檔名 / 狀態(deleted/purged) / 刪除時間
 
 
 def get_s3_client():
@@ -215,7 +216,7 @@ def load_trash_tracker() -> pd.DataFrame:
     cols = ["檔名", "狀態", "刪除時間"]
     try:
         gc = _get_gspread_client(readonly=True)
-        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+        sh = gc.open_by_key(OPS_SHEET_ID)
         ws = sh.worksheet(TRASH_TRACKER_TAB)
         values = ws.get_all_values()
         if len(values) < 2:
@@ -227,7 +228,7 @@ def load_trash_tracker() -> pd.DataFrame:
 
 def save_trash_tracker(df: pd.DataFrame):
     gc = _get_gspread_client(readonly=False)
-    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
+    sh = gc.open_by_key(OPS_SHEET_ID)
     ws = _get_or_create_ws(sh, TRASH_TRACKER_TAB, rows=1000, cols=3)
     ws.clear()
     data = [["檔名", "狀態", "刪除時間"]] + df.astype(str).values.tolist()
@@ -283,8 +284,8 @@ def purge_old_trash():
 def _load_schedule_rows():
     try:
         gc = _get_gspread_client(readonly=True)
-        sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
-        ws = sh.worksheet("MailSchedule")
+        sh = gc.open_by_key(OPS_SHEET_ID)
+        ws = sh.worksheet("定時寄信設定")
         values = ws.get_all_values()
         rows = []
         for row in values[1:]:
@@ -302,8 +303,8 @@ def _load_schedule_rows():
 
 def _save_schedule_rows(rows):
     gc = _get_gspread_client(readonly=False)
-    sh = gc.open_by_key(PRODUCTDEPT_SHEET_ID)
-    ws = _get_or_create_ws(sh, "MailSchedule", rows=20, cols=5)
+    sh = gc.open_by_key(OPS_SHEET_ID)
+    ws = _get_or_create_ws(sh, "定時寄信設定", rows=20, cols=5)
     ws.clear()
     header = ["月", "日", "年門檻", "月門檻", "收件信箱"]
     data = [header] + [[r["月"], r["日"], r["年門檻"], r["月門檻"], r["收件信箱"]] for r in rows]
@@ -525,7 +526,7 @@ def render():
 
         st.divider()
         st.markdown("**⏰ 定時寄信設定**")
-        st.caption("這裡設定的內容會寫進 Total Certificate Management 底下的 MailSchedule 分頁。")
+        st.caption("這裡設定的內容會寫進 Library tool 08 底下的「定時寄信設定」分頁。")
 
         if "schedule_rows" not in st.session_state:
             loaded = _load_schedule_rows()
@@ -551,7 +552,7 @@ def render():
         if st.button("💾 儲存排程設定"):
             try:
                 _save_schedule_rows(st.session_state["schedule_rows"])
-                st.success("排程設定已寫入 Google Sheets 的 MailSchedule 分頁。")
+                st.success("排程設定已寫入 Google Sheets 的「定時寄信設定」分頁。")
             except Exception as e:
                 st.error(f"儲存失敗：{e}")
 
@@ -579,7 +580,7 @@ def render():
                 },
                 key="pending_editor",
             )
-            if st.button("💾 儲存確定展延清單", key="save_pending_btn"):
+            if st.button("💾 儲存", key="save_pending_btn"):
                 try:
                     save_pending_to_sheet(edited_pending)
                     st.success("已儲存。")
