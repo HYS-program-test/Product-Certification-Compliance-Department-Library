@@ -232,10 +232,10 @@ def find_and_download_s3(folder_prefix, keyword):
                     buf = BytesIO()
                     s3.download_fileobj(S3_BUCKET, key, buf)
                     buf.seek(0)
-                    return buf.read(), filename
-    except Exception:
-        pass
-    return None, None
+                    return buf.read(), filename, None
+    except Exception as e:
+        return None, None, f"{type(e).__name__}: {e}"
+    return None, None, None
 
 @st.cache_resource
 def _ensure_watermark_font():
@@ -318,7 +318,7 @@ def build_merged_download(cart: list, wm_middle: str) -> bytes:
             continue
         seen.add(item["dedup_key"])
 
-        data, _ = find_and_download_s3(item["folder"], item["keyword"])
+        data, _, _ = find_and_download_s3(item["folder"], item["keyword"])
         if not data:
             continue
 
@@ -1283,9 +1283,11 @@ def render_results_list(result_df, title_field, meta_fields, s3_folder, keyword_
     if pending:
         i = pending[0]
         keyword = row_meta[i]["keyword"]
-        data, filename = find_and_download_s3(s3_folder, keyword)
+        data, filename, s3_error = find_and_download_s3(s3_folder, keyword)
         statuses[i] = ("available", filename) if data else ("unavailable", None)
         st.session_state[status_key] = statuses
+        if s3_error:
+            st.session_state["_last_s3_error"] = s3_error
         st.rerun()
 
 # ─────────────────────────────────────────────
@@ -1297,6 +1299,15 @@ def render_main():
 
     from pages_impl._shared import render_page_header
     render_page_header("07")
+
+    if st.session_state.get("_last_s3_error"):
+        col_err, col_clear = st.columns([6, 1])
+        with col_err:
+            st.error(f"❌ 最近一次 S3 查詢失敗：{st.session_state['_last_s3_error']}")
+        with col_clear:
+            if st.button("關閉", key="dismiss_s3_error"):
+                st.session_state["_last_s3_error"] = None
+                st.rerun()
 
     col_left, col_right = st.columns([1.15, 1])
 

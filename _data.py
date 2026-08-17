@@ -92,6 +92,11 @@ def load_full_table() -> pd.DataFrame:
         df = pd.DataFrame(data, columns=COL_NAMES)
         df = df[df["室外機型號"].astype(str).str.strip() != ""].reset_index(drop=True)
 
+        # ── 補值：商品驗證證書編號／有效期限在 Google Sheets 上是合併儲存格，
+        # 逐列讀取時同一張證書底下的型號會讀到空白，往下用最近一個非空白值補齊 ──
+        for col in ["商品驗證證書編號", "商品驗證有效期限"]:
+            df[col] = df[col].replace("", pd.NA).ffill().fillna("")
+
         today = pd.Timestamp(datetime.now().date())
 
         # ── 商品驗證證書 ──
@@ -152,12 +157,10 @@ def load_full_table() -> pd.DataFrame:
             badge_risk(d, h) for d, h in zip(df["節能標章剩餘天數"], df["有節能標章"])
         ]
 
-        # ── CSPF ──
+        # ── CSPF：直接抓 Z 欄（CSPF實測/標示），不再用 X/Y 自行計算 ──
         df["CSPF_實測_num"] = df["CSPF_實測"].apply(_to_float)
         df["CSPF_標示_num"] = df["CSPF_標示"].apply(_to_float)
-        ratio_from_col = df["CSPF實測標示比"].apply(_pct_to_float)
-        ratio_computed = df["CSPF_實測_num"] / df["CSPF_標示_num"]
-        df["CSPF實測標示比_num"] = ratio_from_col.combine_first(ratio_computed)
+        df["CSPF實測標示比_num"] = df["CSPF實測標示比"].apply(_pct_to_float)
 
         def cspf_bucket(ratio):
             if pd.isna(ratio):
@@ -182,8 +185,12 @@ def load_full_table() -> pd.DataFrame:
                 reasons.append("缺登錄編號")
             if str(row["能源效率分級"]).strip() == "":
                 reasons.append("缺能效分級")
+            if str(row["安規測試報告編號"]).strip() == "":
+                reasons.append("缺安規測試報告編號")
             if not row["商品驗證有效"] and not row["有節能標章"]:
                 reasons.append("未配對室內機")
+            if not row["商品驗證有效"]:
+                reasons.append("商品驗證登錄證書資料缺漏")
             return "；".join(reasons)
 
         df["資料品質異常原因"] = df.apply(quality_reasons, axis=1)

@@ -31,8 +31,8 @@ def render():
     due_90 = int(
         ((df["商品驗證風險狀態"] == "90天內") | (df["節能標章風險狀態"] == "90天內")).sum()
     )
-    valid_models = int(df["室外機型號"].nunique())
-    badge_models = int(df.loc[df["標章覆蓋狀態"] == "標章有效", "室外機型號"].nunique())
+    valid_models = int(df.loc[df["商品驗證現行有效"], "室外機型號"].nunique())
+    badge_models = int(df.loc[df["商品驗證現行有效"] & df["有節能標章"], "室外機型號"].nunique())
     coverage_rate_num = (badge_models / valid_models * 100) if valid_models else 0
     coverage_rate = f"{coverage_rate_num:.1f}%" if valid_models else "—"
 
@@ -56,13 +56,15 @@ def render():
         fig1 = go.Figure(data=[go.Pie(
             labels=labels1, values=g1.values, hole=0.72,
             textinfo="label", textposition="inside", insidetextorientation="horizontal",
+            textfont=dict(size=9, color="#1E293B", family="Microsoft JhengHei, sans-serif"),
             marker=dict(colors=["#9EE0F5"] * len(g1), line=dict(color="#FFFFFF", width=3)),
             showlegend=False, sort=False,
         )])
         fig1.add_annotation(text=f"<b>{cert_valid}</b> <span style='font-size:16px;'>張</span>",
-                             x=0.5, y=0.5, font=dict(size=32, color="#1E293B"), showarrow=False)
+                             x=0.5, y=0.5, font=dict(size=32, color="#1E293B", family="Microsoft JhengHei, sans-serif"), showarrow=False)
         fig1.update_layout(height=DONUT_H, margin=dict(t=10, b=10, l=10, r=10),
-                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                            font=dict(family="Microsoft JhengHei, sans-serif"))
         st.plotly_chart(fig1, use_container_width=True, config={"displayModeBar": False})
 
     # ── 區塊 2：節能標章有效張數（原「各類別能效分級數量統計」環狀圖，去重）──
@@ -74,20 +76,23 @@ def render():
         fig3 = go.Figure(data=[go.Pie(
             labels=labels3, values=g3.values, hole=0.72,
             textinfo="label", textposition="inside", insidetextorientation="horizontal",
+            textfont=dict(size=9, color="#1E293B", family="Microsoft JhengHei, sans-serif"),
             marker=dict(colors=["#A7F3D0", "#93C5FD", "#FDE68A", "#DDD6FE"], line=dict(color="#FFFFFF", width=3)),
             showlegend=False, sort=False,
         )])
         fig3.add_annotation(text=f"<b>{total_badge_certs}</b> <span style='font-size:16px;'>張</span>",
-                             x=0.5, y=0.5, font=dict(size=32, color="#1E293B"), showarrow=False)
+                             x=0.5, y=0.5, font=dict(size=32, color="#1E293B", family="Microsoft JhengHei, sans-serif"), showarrow=False)
         fig3.update_layout(height=DONUT_H, margin=dict(t=10, b=10, l=10, r=10),
-                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                            font=dict(family="Microsoft JhengHei, sans-serif"))
         st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
 
     # ── 區塊 3：節能標章取得百分比（同心圓環，型號覆蓋率，不去重）──
     with col3, st.container(key="chart_card_01_3"):
         st.markdown('<div class="block-card-title">3　節能標章取得百分比</div>', unsafe_allow_html=True)
-        badge_cnt = df[df["標章覆蓋狀態"] == "標章有效"].groupby("類別")["室外機型號"].nunique().reindex(CATEGORY_ORDER, fill_value=0)
-        valid_cnt = df.groupby("類別")["室外機型號"].nunique().reindex(CATEGORY_ORDER, fill_value=0)
+        cert_valid_sub = df[df["商品驗證現行有效"]]
+        badge_cnt = cert_valid_sub[cert_valid_sub["有節能標章"]].groupby("類別")["室外機型號"].nunique().reindex(CATEGORY_ORDER, fill_value=0)
+        valid_cnt = cert_valid_sub.groupby("類別")["室外機型號"].nunique().reindex(CATEGORY_ORDER, fill_value=0)
         rates = {}
         for cat in CATEGORY_ORDER:
             tot = valid_cnt.get(cat, 0)
@@ -95,10 +100,10 @@ def render():
 
         fig2 = go.Figure()
         ring_cfgs = [
-            {"cat": "MA", "color": "#E1BEE7", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
-            {"cat": "VRV", "color": "#90CAF9", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.13},
-            {"cat": "SA", "color": "#FFCC80", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.22},
-            {"cat": "RA", "color": "#C5E1A5", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.31},
+            {"cat": "MA", "color": "#A7F3D0", "r_out": 1.00, "hole": (1.00 - 0.16) / 1.00, "label_y": 0.04},
+            {"cat": "VRV", "color": "#DDD6FE", "r_out": 0.82, "hole": (0.82 - 0.16) / 0.82, "label_y": 0.13},
+            {"cat": "SA", "color": "#FDE68A", "r_out": 0.64, "hole": (0.64 - 0.16) / 0.64, "label_y": 0.22},
+            {"cat": "RA", "color": "#93C5FD", "r_out": 0.46, "hole": (0.46 - 0.16) / 0.46, "label_y": 0.31},
         ]
         for cfg in ring_cfgs:
             c_name = cfg["cat"]
@@ -106,19 +111,20 @@ def render():
             r_out = cfg["r_out"]
             fig2.add_trace(go.Pie(
                 values=[val, max(0, 100 - val)],
-                labels=[f"{c_name}: {val:.1f}%", ""],
+                text=[f"{c_name}: {val:.1f}%", ""],
                 hole=cfg["hole"], sort=False, direction="clockwise", rotation=90,
-                marker=dict(colors=[cfg["color"], "#F1F5F9"], line=dict(color="#FFFFFF", width=1.5)),
-                textinfo="label", textposition="inside", insidetextorientation="horizontal",
-                textfont=dict(size=9, color="#1E293B"),
-                hoverinfo="label",
+                marker=dict(colors=[cfg["color"], "#FBFCFD"], line=dict(color="#FFFFFF", width=1.5)),
+                textinfo="text", textposition="inside", insidetextorientation="horizontal",
+                textfont=dict(size=9, color="#1E293B", family="Microsoft JhengHei, sans-serif"),
+                hoverinfo="text",
                 domain=dict(x=[0.5 - r_out / 2, 0.5 + r_out / 2], y=[0.5 - r_out / 2, 0.5 + r_out / 2]),
                 showlegend=False,
             ))
         fig2.add_annotation(text=f"<b>{coverage_rate_num:.0f}%</b>", x=0.5, y=0.5,
-                             font=dict(size=24, color="#1E293B"), showarrow=False)
+                             font=dict(size=24, color="#1E293B", family="Microsoft JhengHei, sans-serif"), showarrow=False)
         fig2.update_layout(height=DONUT_H, margin=dict(t=10, b=10, l=10, r=10),
-                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                            font=dict(family="Microsoft JhengHei, sans-serif"))
         st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
     col4, col5, col6 = st.columns(3)

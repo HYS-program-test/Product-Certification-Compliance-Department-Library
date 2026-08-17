@@ -30,30 +30,36 @@ def render():
 
     df = apply_filters(df_all, category, lab, grade, badge)
 
+    show_cols = [
+        "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "商品驗證剩餘天數",
+        "節能標章證書編號", "節能標章有效日期", "節能標章剩餘天數",
+        "能源效率分級", "CSPF_實測", "CSPF_標示", "登錄編號",
+    ]
+
     total_rows = len(df)
     valid_models = int(df["室外機型號"].nunique())
     cert_valid = int(df[df["商品驗證現行有效"]].drop_duplicates("商品驗證證書編號").shape[0])
     badge_valid = int(df[df["標章覆蓋狀態"] == "標章有效"].drop_duplicates("節能標章證書編號").shape[0])
-    badge_models = int(df.loc[df["標章覆蓋狀態"] == "標章有效", "室外機型號"].nunique())
-    coverage_rate = f"{badge_models / valid_models * 100:.1f}%" if valid_models else "—"
-    avg_ratio = df["CSPF實測標示比_num"].dropna()
-    avg_ratio_str = f"{avg_ratio.mean() * 100:.1f}%" if len(avg_ratio) else "—"
 
-    render_kpi_row([
-        ("資料明細筆數", total_rows),
-        ("有效商品型號數", valid_models),
-        ("商品驗證有效張數", cert_valid),
-        ("節能標章有效張數", badge_valid),
-        ("標章有效覆蓋率", coverage_rate),
-        ("平均CSPF實測標示比", avg_ratio_str),
-    ])
+    kpi_col, search_col = st.columns([3, 1.4])
+    with kpi_col:
+        render_kpi_row([
+            ("資料明細筆數", total_rows),
+            ("有效商品型號數", valid_models),
+            ("商品驗證有效張數", cert_valid),
+            ("節能標章有效張數", badge_valid),
+        ])
+    with search_col:
+        keyword = st.text_input("關鍵字搜尋（模糊比對全部欄位）", key="p03_keyword", placeholder="輸入型號、證書編號、日期…")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    if keyword.strip():
+        kw = keyword.strip()
+        mask = df[show_cols].astype(str).apply(
+            lambda col: col.str.contains(kw, case=False, na=False, regex=False)
+        ).any(axis=1)
+        df = df[mask]
+
+    st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
     with st.container(key="chart_card_03_table"):
-        show_cols = [
-            "類別", "室外機型號", "商品驗證證書編號", "商品驗證有效期限", "商品驗證剩餘天數",
-            "節能標章證書編號", "節能標章有效日期", "節能標章剩餘天數",
-            "能源效率分級", "CSPF_實測", "CSPF_標示", "登錄編號",
-        ]
         display_df = df[show_cols]
         st.dataframe(display_df, use_container_width=True, hide_index=True, height=560)
