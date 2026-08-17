@@ -133,8 +133,8 @@ def render():
     if "p01_g2_page" not in st.session_state:
         st.session_state["p01_g2_page"] = 1
 
-    nav_l, nav_mid, nav_r = st.columns([1, 12, 1])
     with st.container(key="p01_nav_arrows"):
+        nav_l, nav_mid, nav_r = st.columns([1, 12, 1])
         with nav_l:
             if st.button("◀", key="p01_prev_group", use_container_width=True,
                           disabled=(st.session_state["p01_g2_page"] == 1)):
