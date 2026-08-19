@@ -123,41 +123,46 @@ def send_otp(email: str, code: str) -> bool:
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
       
-      html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+      html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; }
       #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
       
-      /* 深沉酷黑背景 */
-      .stApp { background-color: #0b0f19 !important; color: #e2e8f0 !important; }
+      /* 全局柔和漸層背景 */
+      .stApp { 
+        background: linear-gradient(135deg, #eef5f3 0%, #e6f0fa 50%, #f4f0f8 100%) !important;
+        background-attachment: fixed !important;
+      }
       .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
       div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
 
-      /* 側邊欄深色鋼鐵風格 */
+      /* 左側玻璃質感導覽列 */
       .st-key-nav_col {
-        background: #111827 !important;
-        border: 1px solid #1f2937 !important;
-        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
+        border-radius: 16px !important;
         padding: 0.8rem 0.5rem !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 8px 32px rgba(149, 157, 165, 0.08) !important;
       }
 
-      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #1f2937; margin-bottom: 0.5rem; }
-      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #38bdf8; letter-spacing: 0.05em; }
-      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #f3f4f6; line-height: 1.25; margin-top: 2px; }
+      /* 系統標題 */
+      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 0.5rem; }
+      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #4a7c76; letter-spacing: 0.05em; }
+      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #2c3e50; line-height: 1.25; margin-top: 2px; }
 
-      /* 選單按鈕 */
+      /* 選單按鈕壓縮與樣式 */
       .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
       .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important; color: #9ca3af !important;
+        background: transparent !important; color: #52606d !important;
         border: 1px solid transparent !important; border-radius: 8px !important;
         font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
         width: 100% !important; text-align: left !important; justify-content: flex-start !important;
       }
-      .st-key-nav_col [data-testid="stButton"] > button:hover { background: #1f2937 !important; color: #f9fafb !important; }
+      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.75) !important; color: #1a252f !important; }
       .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #0284c7 !important; color: #ffffff !important; font-weight: 700 !important;
-        box-shadow: 0 0 15px rgba(2, 132, 199, 0.4) !important;
+        background: #ffffff !important; color: #2b6c67 !important; font-weight: 700 !important;
+        box-shadow: 0 4px 12px rgba(43, 108, 103, 0.12) !important;
       }
     </style>
     """, unsafe_allow_html=True)
