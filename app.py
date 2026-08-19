@@ -123,39 +123,39 @@ def send_otp(email: str, code: str) -> bool:
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
       
-      html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+      html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
       #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
       
-      .stApp { background-color: #f3f4f6 !important; }
+      .stApp { background-color: #f8fafc !important; }
       .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
       div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
 
-      /* 純白微陰影側邊欄 */
+      /* 經典深藍側邊欄 */
       .st-key-nav_col {
-        background: #ffffff !important;
-        border: 1px solid #e5e7eb !important;
+        background: #1e293b !important;
         border-radius: 12px !important;
         padding: 0.8rem 0.5rem !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
       }
 
-      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #f3f4f6; margin-bottom: 0.5rem; }
-      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #6b7280; letter-spacing: 0.05em; }
-      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #111827; line-height: 1.25; margin-top: 2px; }
+      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #334155; margin-bottom: 0.5rem; }
+      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; }
+      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #ffffff; line-height: 1.25; margin-top: 2px; }
 
-      /* 按鈕與 Active 效果 */
+      /* 側邊欄按鈕 */
       .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
       .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important; color: #4b5563 !important;
-        border: 1px solid transparent !important; border-radius: 8px !important;
+        background: transparent !important; color: #cbd5e1 !important;
+        border: 1px solid transparent !important; border-radius: 6px !important;
         font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
         width: 100% !important; text-align: left !important; justify-content: flex-start !important;
       }
-      .st-key-nav_col [data-testid="stButton"] > button:hover { background: #f9fafb !important; color: #111827 !important; }
+      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
       .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #111827 !important; color: #ffffff !important; font-weight: 700 !important;
+        background: #2563eb !important; color: #ffffff !important; font-weight: 700 !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
       }
     </style>
     """, unsafe_allow_html=True)
