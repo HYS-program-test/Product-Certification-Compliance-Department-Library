@@ -123,39 +123,41 @@ def send_otp(email: str, code: str) -> bool:
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       
-      html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
+      html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
       #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
       
-      .stApp { background-color: #f8fafc !important; }
+      /* 深沉酷黑背景 */
+      .stApp { background-color: #0b0f19 !important; color: #e2e8f0 !important; }
       .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
       div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
 
-      /* 經典深藍側邊欄 */
+      /* 側邊欄深色鋼鐵風格 */
       .st-key-nav_col {
-        background: #1e293b !important;
+        background: #111827 !important;
+        border: 1px solid #1f2937 !important;
         border-radius: 12px !important;
         padding: 0.8rem 0.5rem !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
       }
 
-      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #334155; margin-bottom: 0.5rem; }
-      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; }
-      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #ffffff; line-height: 1.25; margin-top: 2px; }
+      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #1f2937; margin-bottom: 0.5rem; }
+      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #38bdf8; letter-spacing: 0.05em; }
+      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #f3f4f6; line-height: 1.25; margin-top: 2px; }
 
-      /* 側邊欄按鈕 */
+      /* 選單按鈕 */
       .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
       .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important; color: #cbd5e1 !important;
-        border: 1px solid transparent !important; border-radius: 6px !important;
+        background: transparent !important; color: #9ca3af !important;
+        border: 1px solid transparent !important; border-radius: 8px !important;
         font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
         width: 100% !important; text-align: left !important; justify-content: flex-start !important;
       }
-      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
+      .st-key-nav_col [data-testid="stButton"] > button:hover { background: #1f2937 !important; color: #f9fafb !important; }
       .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #2563eb !important; color: #ffffff !important; font-weight: 700 !important;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
+        background: #0284c7 !important; color: #ffffff !important; font-weight: 700 !important;
+        box-shadow: 0 0 15px rgba(2, 132, 199, 0.4) !important;
       }
     </style>
     """, unsafe_allow_html=True)
