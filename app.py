@@ -118,7 +118,7 @@ def send_otp(email: str, code: str) -> bool:
 
 
 # ─────────────────────────────────────────────
-# 共用 CSS：左下圖風格（柔和輕霧色調 + 圓角玻璃質感選單）
+# 共用 CSS：高權重覆蓋 Streamlit 預設樣式
 # ─────────────────────────────────────────────
 def inject_shared_css():
     st.markdown("""
@@ -129,151 +129,126 @@ def inject_shared_css():
         font-family: 'Plus Jakarta Sans', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; 
       }
       
-      /* 隱藏預設 Streamlit 頁首頁尾 */
+      /* 1. 隱藏預設 Streamlit 頁首頁尾與裝飾條 */
       #MainMenu, footer, header,
       [data-testid="stHeader"], [data-testid="stToolbar"],
       [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
       [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
       
-      /* 全局背景：左下圖風格的微溫柔漸層背景 (Soft Gradient Body) */
+      /* 2. 全局柔和漸層背景 */
       .stApp { 
         background: linear-gradient(135deg, #eef5f3 0%, #e6f0fa 50%, #f4f0f8 100%) !important;
         background-attachment: fixed !important;
       }
 
+      /* 3. 主容器縮小外邊距 */
       .block-container { 
-        padding-top: 0.8rem !important; 
-        padding-left: 0.8rem !important; 
-        padding-right: 0.8rem !important;
-        padding-bottom: 0.8rem !important; 
+        padding: 0.6rem 0.8rem !important;
         max-width: 100% !important; 
       }
 
-      div[data-testid="stVerticalBlock"] { gap: .5rem !important; }
-      div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; }
+      div[data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
+      div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
       div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] { min-width: 0 !important; }
 
-      /* 左側 Sidebar 容器：高雅半透明圓角玻璃卡片 */
+      /* 4. 左側 Sidebar 圓角玻璃質感容器 */
       .st-key-nav_col {
-        background: rgba(255, 255, 255, 0.7) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
         border: 1px solid rgba(255, 255, 255, 0.8) !important;
         border-radius: 16px !important;
-        padding: 1rem 0.6rem !important;
-        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.12) !important;
+        padding: 0.8rem 0.5rem !important;
+        box-shadow: 0 8px 32px rgba(149, 157, 165, 0.08) !important;
         display: flex;
         flex-direction: column;
-        gap: 6px !important;
       }
 
-      /* 左側頂部標題系統名稱 */
+      /* 左側系統名稱抬頭 */
       .sys-title-box {
-        padding: 0.3rem 0.5rem 0.8rem 0.5rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        margin-bottom: 0.4rem;
+        padding: 0.2rem 0.4rem 0.6rem 0.4rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        margin-bottom: 0.5rem;
       }
       .sys-title-box .app-badge {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        color: #5c8d89;
-        display: inline-block;
-        margin-bottom: 2px;
+        color: #4a7c76;
       }
       .sys-title-box .app-name {
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 700;
         color: #2c3e50;
         line-height: 1.25;
+        margin-top: 2px;
         word-break: break-word;
       }
 
-      /* 側欄 01~08 選單按鈕 */
-      .st-key-nav_col div[data-testid="stButton"] button {
+      /* 5. 強制壓制 Streamlit 預設按鈕 (高高度與寬度精細化) */
+      .st-key-nav_col [data-testid="stButton"] {
+        margin-bottom: 3px !important;
+      }
+      
+      .st-key-nav_col [data-testid="stButton"] > button {
         background: transparent !important;
-        color: #5a6e7f !important;
+        color: #52606d !important;
         border: 1px solid transparent !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         font-weight: 500 !important;
         font-size: 0.82rem !important;
-        padding: 0.5rem 0.75rem !important;
-        min-height: 0 !important;
+        padding: 0.35rem 0.6rem !important;
+        min-height: 34px !important;
+        height: 34px !important;
+        width: 100% !important;
         text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
         justify-content: flex-start !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.15s ease !important;
         box-shadow: none !important;
       }
-      
-      .st-key-nav_col div[data-testid="stButton"] button:hover {
-        background: rgba(255, 255, 255, 0.8) !important;
-        color: #2c3e50 !important;
-        transform: translateX(2px);
+
+      /* Hover 懸浮效果 */
+      .st-key-nav_col [data-testid="stButton"] > button:hover {
+        background: rgba(255, 255, 255, 0.75) !important;
+        color: #1a252f !important;
+        border-color: rgba(255, 255, 255, 0.6) !important;
       }
-      
-      /* Active 狀態：白底 + 微綠藍高亮 */
-      .st-key-nav_col div[data-testid="stButton"] button[kind="primary"] {
+
+      /* Active 點選狀態：純白底 + 莫蘭迪綠高亮 + 陰影 */
+      .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
         background: #ffffff !important;
         color: #2b6c67 !important;
         font-weight: 700 !important;
-        border: 1px solid rgba(255, 255, 255, 0.9) !important;
-        box-shadow: 0 4px 12px rgba(92, 141, 137, 0.15) !important;
+        border: 1px solid #ffffff !important;
+        box-shadow: 0 4px 12px rgba(43, 108, 103, 0.12) !important;
       }
 
-      /* 底部使用者資訊區 */
+      /* 6. 底部使用者資訊與登出區 */
       .nav-user-container {
         margin-top: auto;
-        padding-top: 0.6rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
       }
       .nav-user {
         color: #7f8c8d;
-        font-size: 0.72rem;
-        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.3rem 0.3rem 0.3rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-
-      /* 主內容區頁頭標題 (Header) */
-      .page-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        border-radius: 14px;
-        padding: 0.5rem 1rem;
-        margin-bottom: 0.6rem;
-        box-shadow: 0 4px 16px rgba(149, 157, 165, 0.08);
-      }
-      .page-header .ph-icon {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        border-radius: 9px;
-        background: #e8f3f1;
-        color: #3b7a75;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-      }
-      .page-header .ph-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #2c3e50;
-        line-height: 1.2;
-      }
-      .page-header .ph-sub {
-        font-size: 0.72rem;
-        color: #8fa0a8;
-        margin-top: 2px;
+      .st-key-portal_logout_btn > button {
+        min-height: 28px !important;
+        height: 28px !important;
+        font-size: 0.75rem !important;
+        color: #8c9b9d !important;
+        background: rgba(0,0,0,0.02) !important;
       }
 
-      /* 通用卡片容器優化 (卡片化內容背景) */
+      /* 7. 主內容區微調 */
       div[class*="st-key-chart_card"], .kpi-card {
         background: rgba(255, 255, 255, 0.8) !important;
         backdrop-filter: blur(8px) !important;
@@ -282,7 +257,7 @@ def inject_shared_css():
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
       }
 
-      /* 登入畫面置中 */
+      /* 8. 登入畫面置中 */
       .st-key-login_wrap {
         min-height: 100vh !important;
         display: flex !important;
@@ -384,19 +359,19 @@ def render_login():
 
 
 # ─────────────────────────────────────────────
-# 導覽列 (左側列表 01~08 直排不分類)
+# 導覽列 (左側列表 01~08 直排)
 # ─────────────────────────────────────────────
 def render_nav():
     with st.container(key="nav_col"):
-        # 系統標題
+        # 系統名稱
         st.markdown("""
         <div class="sys-title-box">
-            <div class="app-badge">Portal Hub</div>
+            <div class="app-badge">PORTAL HUB</div>
             <div class="app-name">product certification compliance department library</div>
         </div>
         """, unsafe_allow_html=True)
 
-        # 01 ~ 08 列表，直接依序顯示不添加分類區隔標題
+        # 01 ~ 08 選單按鈕
         for page in PAGES:
             label = f"{page['id']}  {page['label']}"
             is_active = st.session_state["current_page"] == page["id"]
@@ -405,7 +380,7 @@ def render_nav():
                 st.session_state["current_page"] = page["id"]
                 st.rerun()
 
-        # 底部使用者資訊與登出按鈕
+        # 底部使用者資訊與登出
         st.markdown(f"""
         <div class="nav-user-container">
             <div class="nav-user" title="{st.session_state.get('username','')}">👤 {st.session_state.get('username','')}</div>
@@ -454,7 +429,7 @@ def main():
         render_login()
     else:
         inject_shared_css()
-        col_nav, col_content = st.columns([1.3, 6], gap="small")
+        col_nav, col_content = st.columns([1.2, 6.8], gap="small")
         with col_nav:
             render_nav()
         with col_content:
