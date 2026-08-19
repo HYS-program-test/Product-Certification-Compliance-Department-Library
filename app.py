@@ -123,152 +123,42 @@ def send_otp(email: str, code: str) -> bool:
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
       
-      html, body, [class*="css"] { 
-        font-family: 'Plus Jakarta Sans', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; 
-      }
+      html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
+      #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
       
-      /* 1. 隱藏預設 Streamlit 頁首頁尾與裝飾條 */
-      #MainMenu, footer, header,
-      [data-testid="stHeader"], [data-testid="stToolbar"],
-      [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
-      [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
-      
-      /* 2. 全局柔和漸層背景 */
-      .stApp { 
-        background: linear-gradient(135deg, #eef5f3 0%, #e6f0fa 50%, #f4f0f8 100%) !important;
-        background-attachment: fixed !important;
-      }
-
-      /* 3. 主容器縮小外邊距 */
-      .block-container { 
-        padding: 0.6rem 0.8rem !important;
-        max-width: 100% !important; 
-      }
-
-      div[data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
+      .stApp { background-color: #f0f4f8 !important; }
+      .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
       div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
-      div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] { min-width: 0 !important; }
 
-      /* 4. 左側 Sidebar 圓角玻璃質感容器 */
+      /* 灰藍色質感側邊欄 */
       .st-key-nav_col {
-        background: rgba(255, 255, 255, 0.65) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.8) !important;
-        border-radius: 16px !important;
+        background: #dbe3eb !important;
+        border-radius: 14px !important;
         padding: 0.8rem 0.5rem !important;
-        box-shadow: 0 8px 32px rgba(149, 157, 165, 0.08) !important;
-        display: flex;
-        flex-direction: column;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
       }
 
-      /* 左側系統名稱抬頭 */
-      .sys-title-box {
-        padding: 0.2rem 0.4rem 0.6rem 0.4rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        margin-bottom: 0.5rem;
-      }
-      .sys-title-box .app-badge {
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #4a7c76;
-      }
-      .sys-title-box .app-name {
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #2c3e50;
-        line-height: 1.25;
-        margin-top: 2px;
-        word-break: break-word;
-      }
+      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 0.5rem; }
+      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #576b7c; letter-spacing: 0.05em; }
+      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #1e293b; line-height: 1.25; margin-top: 2px; }
 
-      /* 5. 強制壓制 Streamlit 預設按鈕 (高高度與寬度精細化) */
-      .st-key-nav_col [data-testid="stButton"] {
-        margin-bottom: 3px !important;
-      }
-      
+      /* 選單按鈕 */
+      .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
       .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important;
-        color: #52606d !important;
-        border: 1px solid transparent !important;
-        border-radius: 8px !important;
-        font-weight: 500 !important;
-        font-size: 0.82rem !important;
-        padding: 0.35rem 0.6rem !important;
-        min-height: 34px !important;
-        height: 34px !important;
-        width: 100% !important;
-        text-align: left !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        transition: all 0.15s ease !important;
-        box-shadow: none !important;
+        background: transparent !important; color: #475569 !important;
+        border: 1px solid transparent !important; border-radius: 8px !important;
+        font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
+        width: 100% !important; text-align: left !important; justify-content: flex-start !important;
       }
-
-      /* Hover 懸浮效果 */
-      .st-key-nav_col [data-testid="stButton"] > button:hover {
-        background: rgba(255, 255, 255, 0.75) !important;
-        color: #1a252f !important;
-        border-color: rgba(255, 255, 255, 0.6) !important;
-      }
-
-      /* Active 點選狀態：純白底 + 莫蘭迪綠高亮 + 陰影 */
+      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.5) !important; color: #0f172a !important; }
       .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #ffffff !important;
-        color: #2b6c67 !important;
-        font-weight: 700 !important;
-        border: 1px solid #ffffff !important;
-        box-shadow: 0 4px 12px rgba(43, 108, 103, 0.12) !important;
+        background: #ffffff !important; color: #334155 !important; font-weight: 700 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
       }
-
-      /* 6. 底部使用者資訊與登出區 */
-      .nav-user-container {
-        margin-top: auto;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-      }
-      .nav-user {
-        color: #7f8c8d;
-        font-size: 0.7rem;
-        padding: 0.1rem 0.3rem 0.3rem 0.3rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .st-key-portal_logout_btn > button {
-        min-height: 28px !important;
-        height: 28px !important;
-        font-size: 0.75rem !important;
-        color: #8c9b9d !important;
-        background: rgba(0,0,0,0.02) !important;
-      }
-
-      /* 7. 主內容區微調 */
-      div[class*="st-key-chart_card"], .kpi-card {
-        background: rgba(255, 255, 255, 0.8) !important;
-        backdrop-filter: blur(8px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.9) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
-      }
-
-      /* 8. 登入畫面置中 */
-      .st-key-login_wrap {
-        min-height: 100vh !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-top: -3rem !important;
-      }
-      .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
     </style>
     """, unsafe_allow_html=True)
-
 
 # ─────────────────────────────────────────────
 # 登入畫面
