@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from login_panel import login_panel
 
 st.set_page_config(
-    page_title="Product Certification Compliance Department Library",
+    page_title="商品證書管理入口",
     page_icon="🗂️",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -22,17 +22,17 @@ FIXED_CODE_ACCOUNTS = {
 COMPANY_DOMAIN = "hotaidev.com.tw"
 
 # ─────────────────────────────────────────────
-# 分頁定義（不分組，直接依 01~08 排列）
+# 分頁定義
 # ─────────────────────────────────────────────
 PAGES = [
-    {"id": "01", "label": "證書管理"},
-    {"id": "02", "label": "風險管理"},
-    {"id": "03", "label": "證書總表"},
-    {"id": "04", "label": "管理預警"},
-    {"id": "05", "label": "PDF掃描歸檔"},
-    {"id": "06", "label": "PDF切割工具"},
-    {"id": "07", "label": "商品證書查詢"},
-    {"id": "08", "label": "商品展延清單"},
+    {"id": "01", "label": "證書管理",   "group": "dashboard"},
+    {"id": "02", "label": "風險管理",   "group": "dashboard"},
+    {"id": "03", "label": "證書總表",   "group": "dashboard"},
+    {"id": "04", "label": "管理預警",   "group": "dashboard"},
+    {"id": "05", "label": "PDF掃描歸檔", "group": "tools"},
+    {"id": "06", "label": "PDF切割工具", "group": "tools"},
+    {"id": "07", "label": "商品證書查詢", "group": "tools"},
+    {"id": "08", "label": "商品展延清單", "group": "tools"},
 ]
 
 # ─────────────────────────────────────────────
@@ -56,7 +56,7 @@ def init_session():
 
 
 # ─────────────────────────────────────────────
-# Google Sheets（登入紀錄用）
+# Google Sheets（登入紀錄用，跟 cert-query-system 共用同一份）
 # ─────────────────────────────────────────────
 @st.cache_resource
 def get_gsheet_client():
@@ -94,16 +94,16 @@ def send_otp(email: str, code: str) -> bool:
 
         html_body = f"""
         <html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
-        <h2 style="color:#3A7CA5;">【Product Certification Compliance Department Library】登入驗證碼</h2>
+        <h2 style="color:#5C7A8A;">【商品證書管理入口】登入驗證碼</h2>
         <p>您的驗證碼為：</p>
-        <h1 style="letter-spacing:8px;color:#205072;font-size:36px;">{code}</h1>
+        <h1 style="letter-spacing:8px;color:#7B98A8;font-size:36px;">{code}</h1>
         <p>驗證碼有效時間為 <strong>5 分鐘</strong>，請盡快輸入。</p>
         <p style="color:#888;font-size:12px;">此為系統自動發送，請勿回覆。</p>
         </body></html>
         """
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = "【Product Certification Compliance Department Library】登入驗證碼"
-        msg["From"] = f"系統通知 <{gmail_user}>"
+        msg["Subject"] = "【商品證書管理入口】登入驗證碼"
+        msg["From"] = f"商品證書管理入口通知 <{gmail_user}>"
         msg["To"] = email
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
@@ -118,56 +118,151 @@ def send_otp(email: str, code: str) -> bool:
 
 
 # ─────────────────────────────────────────────
-# 共用 CSS：高權重覆蓋 Streamlit 預設樣式
+# 共用 CSS：白底莫蘭迪藍 + 深藍導覽列（延續 PBI 報表視覺，蓋掉 Streamlit 預設樣式）
 # ─────────────────────────────────────────────
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
-      
-      html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif; }
-      #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
-      
-      /* 全局柔和漸層背景 */
-      .stApp { 
-        background: linear-gradient(135deg, #eef5f3 0%, #e6f0fa 50%, #f4f0f8 100%) !important;
-        background-attachment: fixed !important;
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+      html, body, [class*="css"] { font-family: 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }
+      #MainMenu, footer, header,
+      [data-testid="stHeader"], [data-testid="stToolbar"],
+      [data-testid="stDecoration"] { display: none !important; visibility: hidden !important; }
+      [data-testid="stStatusWidget"] { opacity: 0 !important; pointer-events: none !important; }
+      .block-container { padding-top: .7rem !important; padding-left: .6rem !important; padding-bottom: .7rem !important; margin-top: 0 !important; max-width: 100% !important; }
+      .stApp { background-color: #FFFFFF; }
+      [data-testid="stVerticalBlockBorderWrapper"] { gap: .5rem !important; }
+      div[data-testid="stVerticalBlock"] { gap: .5rem !important; }
+      /* 同一排的 st.columns() 強制不換行，避免內容較寬的欄位把整欄擠到下一行 */
+      div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
       }
-      .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
-      div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
+      div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+      div[data-testid="stHorizontalBlock"] > div.stColumn {
+        min-width: 0 !important;
+      }
 
-      /* 左側玻璃質感導覽列 */
+      div[data-testid="stButton"] button {
+        border-radius: 8px !important; transition: background .12s, color .12s;
+      }
+
+      /* 左側導覽欄：灰底、直排頁籤按鈕，貼齊左邊，壓縮高度 */
       .st-key-nav_col {
-        background: rgba(255, 255, 255, 0.65) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.8) !important;
-        border-radius: 16px !important;
-        padding: 0.8rem 0.5rem !important;
-        box-shadow: 0 8px 32px rgba(149, 157, 165, 0.08) !important;
+        background: #EBEEF0; border-radius: 10px; padding: .55rem .45rem;
+        height: 100%; box-shadow: inset 0 0 0 1px rgba(22,50,79,.05);
+        gap: 3px !important;
+      }
+      .st-key-nav_col div[data-testid="stButton"] button {
+        background: transparent !important; color: #57666E !important;
+        border: 1px solid transparent !important; border-left: 3px solid transparent !important;
+        border-radius: 6px !important; font-weight: 600 !important;
+        font-size: .78rem !important; padding: .35rem .45rem !important; min-height: 0 !important;
+        text-align: left !important; white-space: nowrap !important;
+        overflow: hidden !important; text-overflow: ellipsis !important;
+        line-height: 1.5 !important;
+      }
+      .st-key-nav_col div[data-testid="stButton"] button:hover {
+        background: rgba(22,50,79,.07) !important; color: #16324F !important;
+      }
+      .st-key-nav_col div[data-testid="stButton"] button[kind="primary"] {
+        background: #FFFFFF !important; color: #205072 !important;
+        border-left: 3px solid #3A7CA5 !important;
+        box-shadow: 0 1px 2px rgba(22,50,79,.10) !important; font-weight: 700 !important;
+      }
+      .nav-user {
+        color: #7A8890; font-size: .68rem; padding: .3rem .45rem 0;
+        border-top: 1px solid rgba(0,0,0,.08); margin-top: .35rem;
       }
 
-      /* 系統標題 */
-      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 0.5rem; }
-      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #4a7c76; letter-spacing: 0.05em; }
-      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #2c3e50; line-height: 1.25; margin-top: 2px; }
-
-      /* 選單按鈕壓縮與樣式 */
-      .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
-      .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important; color: #52606d !important;
-        border: 1px solid transparent !important; border-radius: 8px !important;
-        font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
-        width: 100% !important; text-align: left !important; justify-content: flex-start !important;
+      /* 各分頁統一抬頭：壓縮高度 */
+      .page-header {
+        display: flex; align-items: center; gap: 10px;
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-radius: 10px;
+        padding: .3rem .7rem; margin-bottom: .35rem;
+        box-shadow: 0 1px 2px rgba(22,50,79,.05);
       }
-      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.75) !important; color: #1a252f !important; }
-      .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #ffffff !important; color: #2b6c67 !important; font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(43, 108, 103, 0.12) !important;
+      .page-header .ph-icon {
+        width: 24px; height: 24px; min-width: 24px; border-radius: 7px;
+        background: #EEF2F4; color: #16324F;
+        display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      }
+      .page-header .ph-title {
+        font-size: .95rem; font-weight: 700; color: #16324F; line-height: 1.25;
+      }
+      .page-header .ph-sub {
+        font-size: .68rem; color: #90A0A8; margin-top: 1px;
+      }
+
+      /* 篩選器：壓縮高度、統一字級 */
+      div[data-testid="stSelectbox"] label p { font-size: .64rem !important; color: #7A8890 !important; margin-bottom: 0 !important; }
+      div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        min-height: 26px !important; font-size: .74rem !important;
+        border-radius: 7px !important; border-color: #DDE3E6 !important;
+      }
+
+      /* KPI 卡片：緊湊 + 頂部色條 + 輕陰影 */
+      .kpi-card {
+        background: #FFFFFF; border: 1px solid #E5E9EB; border-top: 3px solid #3A7CA5;
+        border-radius: 8px; padding: .3rem .55rem .35rem; text-align: center;
+        box-shadow: 0 1px 2px rgba(22,50,79,.05);
+      }
+      .kpi-card .kpi-label { font-size: .64rem; color: #8A9AA3; margin-bottom: 2px; letter-spacing: .02em; }
+      .kpi-card .kpi-value {
+        font-size: 1.15rem; font-weight: 700; color: #16324F;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* 區塊卡片：緊湊 + 輕陰影 + hover 微互動 */
+      .block-card-title {
+        font-size: .76rem; font-weight: 700; color: #16324F; margin-bottom: .25rem;
+        letter-spacing: .01em;
+      }
+      div[class*="st-key-chart_card"] {
+        background: #FFFFFF !important; border: none !important;
+        border-radius: 0 !important; padding: .35rem .5rem .05rem .5rem !important;
+        margin-bottom: .35rem !important; box-shadow: none !important;
+      }
+
+      /* dataframe 邊框柔化，跟卡片風格一致 */
+      div[data-testid="stDataFrame"] { border-radius: 6px; overflow: hidden; }
+      div[data-testid="stDataFrame"] * { font-size: .76rem !important; }
+      div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-size: .76rem !important; }
+
+      /* 登入畫面置中：flexbox 撐滿視窗高度置中，全部加 !important 避免被蓋掉 */
+      .st-key-login_wrap {
+        min-height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-top: -3rem !important;
+      }
+      .st-key-login_wrap > div { width: 100% !important; max-width: 460px !important; }
+
+      /* 01 頁區塊4/5/6 左右切換箭頭：邊框拿不掉，改成白色跟背景融為一體 */
+      div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button {
+        border: 1px solid #FFFFFF !important; background: transparent !important;
+        box-shadow: none !important; outline: none !important;
+        font-size: 1.1rem !important; color: #33414A !important;
+      }
+      div[class*="st-key-p01_nav_arrows"] div[data-testid="stButton"] button:disabled {
+        color: #C4CDD2 !important;
+      }
+
+      /* 01 頁「⋯」選單按鈕：拿掉下拉箭頭圖示，邊框改白色 */
+      div[data-testid="stPopover"] button {
+        border: 1px solid #FFFFFF !important; box-shadow: none !important;
+      }
+      div[data-testid="stPopover"] button svg,
+      div[data-testid="stPopoverButton"] svg,
+      div[data-testid="stPopover"] [data-testid="stIconMaterial"] {
+        display: none !important;
       }
     </style>
     """, unsafe_allow_html=True)
+
+
 # ─────────────────────────────────────────────
-# 登入畫面
+# 登入畫面（沿用 cert-query-system 的 OTP 元件與流程）
 # ─────────────────────────────────────────────
 def render_login():
     inject_shared_css()
@@ -255,34 +350,21 @@ def render_login():
 
 
 # ─────────────────────────────────────────────
-# 導覽列 (左側列表 01~08 直排)
+# 導覽列 + 分頁分發
 # ─────────────────────────────────────────────
 def render_nav():
     with st.container(key="nav_col"):
-        # 系統名稱
-        st.markdown("""
-        <div class="sys-title-box">
-            <div class="app-badge">PORTAL HUB</div>
-            <div class="app-name">product certification compliance department library</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # 01 ~ 08 選單按鈕
         for page in PAGES:
-            label = f"{page['id']}  {page['label']}"
+            label = f"{page['id']}　{page['label']}"
             is_active = st.session_state["current_page"] == page["id"]
             if st.button(label, key=f"nav_{page['id']}", use_container_width=True,
                          type="primary" if is_active else "secondary"):
                 st.session_state["current_page"] = page["id"]
                 st.rerun()
 
-        # 底部使用者資訊與登出
         st.markdown(f"""
-        <div class="nav-user-container">
-            <div class="nav-user" title="{st.session_state.get('username','')}">👤 {st.session_state.get('username','')}</div>
-        </div>
+        <div class="nav-user">👤 {st.session_state.get("username","")}</div>
         """, unsafe_allow_html=True)
-        
         if st.button("登出", use_container_width=True, key="portal_logout_btn"):
             for k in ["logged_in", "username", "login_step", "login_email",
                       "otp_code", "otp_expiry", "login_error", "last_login_nonce"]:
@@ -325,7 +407,7 @@ def main():
         render_login()
     else:
         inject_shared_css()
-        col_nav, col_content = st.columns([1.2, 6.8], gap="small")
+        col_nav, col_content = st.columns([1.3, 6], gap="small")
         with col_nav:
             render_nav()
         with col_content:
