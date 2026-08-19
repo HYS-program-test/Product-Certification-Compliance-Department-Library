@@ -123,43 +123,42 @@ def send_otp(email: str, code: str) -> bool:
 def inject_shared_css():
     st.markdown("""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
       
-      html, body, [class*="css"] { font-family: 'Noto Sans TC', sans-serif; }
+      html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
       #MainMenu, footer, header, [data-testid="stHeader"], [data-testid="stToolbar"] { display: none !important; }
       
-      .stApp { background-color: #f0f4f8 !important; }
+      .stApp { background-color: #f3f4f6 !important; }
       .block-container { padding: 0.6rem 0.8rem !important; max-width: 100% !important; }
       div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.8rem !important; }
 
-      /* 灰藍色質感側邊欄 */
+      /* 純白微陰影側邊欄 */
       .st-key-nav_col {
-        background: #dbe3eb !important;
-        border-radius: 14px !important;
+        background: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 12px !important;
         padding: 0.8rem 0.5rem !important;
-        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
       }
 
-      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 0.5rem; }
-      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #576b7c; letter-spacing: 0.05em; }
-      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #1e293b; line-height: 1.25; margin-top: 2px; }
+      .sys-title-box { padding: 0.2rem 0.4rem 0.6rem; border-bottom: 1px solid #f3f4f6; margin-bottom: 0.5rem; }
+      .sys-title-box .app-badge { font-size: 0.6rem; font-weight: 700; color: #6b7280; letter-spacing: 0.05em; }
+      .sys-title-box .app-name { font-size: 0.78rem; font-weight: 700; color: #111827; line-height: 1.25; margin-top: 2px; }
 
-      /* 選單按鈕 */
+      /* 按鈕與 Active 效果 */
       .st-key-nav_col [data-testid="stButton"] { margin-bottom: 3px !important; }
       .st-key-nav_col [data-testid="stButton"] > button {
-        background: transparent !important; color: #475569 !important;
+        background: transparent !important; color: #4b5563 !important;
         border: 1px solid transparent !important; border-radius: 8px !important;
         font-size: 0.82rem !important; min-height: 34px !important; height: 34px !important;
         width: 100% !important; text-align: left !important; justify-content: flex-start !important;
       }
-      .st-key-nav_col [data-testid="stButton"] > button:hover { background: rgba(255, 255, 255, 0.5) !important; color: #0f172a !important; }
+      .st-key-nav_col [data-testid="stButton"] > button:hover { background: #f9fafb !important; color: #111827 !important; }
       .st-key-nav_col [data-testid="stButton"] > button[kind="primary"] {
-        background: #ffffff !important; color: #334155 !important; font-weight: 700 !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        background: #111827 !important; color: #ffffff !important; font-weight: 700 !important;
       }
     </style>
     """, unsafe_allow_html=True)
-
 # ─────────────────────────────────────────────
 # 登入畫面
 # ─────────────────────────────────────────────
