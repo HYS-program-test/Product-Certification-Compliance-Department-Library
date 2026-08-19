@@ -28,7 +28,7 @@ PAGES = [
     {"id": "01", "label": "證書管理",   "group": "dashboard"},
     {"id": "02", "label": "風險管理",   "group": "dashboard"},
     {"id": "03", "label": "證書總表",   "group": "dashboard"},
-    {"id": "04", "label": "管理預警",   "group": "dashboard"},
+    {"id": "04", "label": "先空著",   "group": "dashboard"},
     {"id": "05", "label": "PDF掃描歸檔", "group": "tools"},
     {"id": "06", "label": "PDF切割工具", "group": "tools"},
     {"id": "07", "label": "商品證書查詢", "group": "tools"},
